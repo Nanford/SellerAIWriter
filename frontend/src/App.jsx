@@ -438,8 +438,8 @@ export default function App() {
                   
                   <ContentBox
                     title="关键词"
-                    content={(result.keywords || []).join(', ')}
-                    translatedContent={translateAll ? ((translatedResult?.keywords || []).join(', ')) : null}
+                    content={Array.isArray(result.keywords) ? (result.keywords || []).join(', ') : (result.keywords || '')}
+                    translatedContent={translateAll ? (Array.isArray(translatedResult?.keywords) ? (translatedResult.keywords || []).join(', ') : (translatedResult?.keywords || '')) : null}
                     expanded={expandedSections.keywords}
                     toggleExpand={() => toggleSection('keywords')}
                   />
