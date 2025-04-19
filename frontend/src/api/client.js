@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8090/api';
+// Change API_URL to use a relative path handled by Nginx proxy
+const API_URL = '/api';
 
 // 创建axios实例
 const api = axios.create({
