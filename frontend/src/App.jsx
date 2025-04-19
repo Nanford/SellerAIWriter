@@ -41,7 +41,8 @@ export default function App() {
     bulletPoints: false,
     keywords: false,
     category: false,
-    itemSpecifics: false
+    itemSpecifics: false,
+    tips: true
   });
 
   const toggleSection = (section) => {
@@ -95,7 +96,8 @@ export default function App() {
       bulletPoints: false,
       keywords: false,
       category: false,
-      itemSpecifics: false
+      itemSpecifics: false,
+      tips: true
     });
     
     try {
@@ -158,7 +160,8 @@ export default function App() {
         bulletPoints: true,
         keywords: true,
         category: true,
-        itemSpecifics: true
+        itemSpecifics: true,
+        tips: true
       });
 
     } catch (err) {
@@ -443,8 +446,8 @@ export default function App() {
                   
                   <ContentBox
                     title="商品分类"
-                    content={(result.category || []).join(' > ')}
-                    translatedContent={translateAll ? ((translatedResult?.category || []).join(' > ')) : null}
+                    content={Array.isArray(result.category) ? (result.category || []).join(' > ') : (result.category || '')}
+                    translatedContent={translateAll ? (Array.isArray(translatedResult?.category) ? (translatedResult.category || []).join(' > ') : (translatedResult?.category || '')) : null}
                     expanded={expandedSections.category}
                     toggleExpand={() => toggleSection('category')}
                   />
@@ -457,6 +460,16 @@ export default function App() {
                     toggleExpand={() => toggleSection('itemSpecifics')}
                     onChange={handleItemSpecificsChange}
                   />
+                  
+                  {platform === 'ebay' && result.tips && result.tips.length > 0 && (
+                    <ContentBox
+                      title="温馨提示"
+                      content={result.tips.join('\n')}
+                      translatedContent={translateAll ? ((translatedResult?.tips || []).join('\n')) : null}
+                      expanded={expandedSections.tips}
+                      toggleExpand={() => toggleSection('tips')}
+                    />
+                  )}
                 </div>
               </div>
             )}
