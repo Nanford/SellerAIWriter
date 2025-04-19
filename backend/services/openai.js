@@ -31,6 +31,11 @@ const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
  * @returns {Object} 生成的内容对象
  */
 export async function generateContentOpenAI(text, imageBase64 = null, platform = 'amazon') {
+  console.log('OpenAI generation started with params:', { 
+    textLength: text?.length, 
+    hasImage: !!imageBase64,
+    platform
+  });
   let retryCount = 0;
   const maxRetries = 3;
   const baseDelay = 1000; // 1秒
@@ -92,7 +97,9 @@ export async function generateContentOpenAI(text, imageBase64 = null, platform =
       });
 
       console.log("API调用成功，返回结果");
-      return JSON.parse(response.choices[0].message.content);
+      const result = JSON.parse(response.choices[0].message.content);
+      console.log('OpenAI generation completed successfully');
+      return result;
     } catch (error) {
       console.error("OpenAI API错误:", error);
       
@@ -116,7 +123,7 @@ export async function generateContentOpenAI(text, imageBase64 = null, platform =
       }
       
       // 如果达到最大重试次数或不是网络相关错误，则返回基本结构
-      return {
+      const fallbackResult = {
         title: text && text.length > 10 ? text.substring(0, 80) : "未能生成标题",
         description: "API调用失败，请稍后重试。原始描述: " + text,
         bulletPoints: ["API连接失败，请稍后重试", "无法生成完整卖点", "请检查网络连接", "可能是暂时性服务中断", "或API密钥配置问题"],
@@ -128,8 +135,20 @@ export async function generateContentOpenAI(text, imageBase64 = null, platform =
           "尺寸": "标准尺寸"
         }
       };
+      console.log('OpenAI generation failed after retries, returning fallback.');
+      return fallbackResult;
     }
   }
+  // Add a final fallback return outside the loop in case something unexpected happens
+  console.log('OpenAI generation failed completely, returning final fallback.');
+  return {
+        title: text && text.length > 10 ? text.substring(0, 80) : "完全失败 - 无法生成标题",
+        description: "所有API调用和重试均失败。原始描述: " + text,
+        bulletPoints: ["系统错误"],
+        keywords: [],
+        category: [],
+        itemSpecifics: {}
+      };
 }
 
 /**

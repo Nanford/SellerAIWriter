@@ -41,6 +41,11 @@ const systemPrompt = `You are an expert Amazon/eBay listing creator. You should 
  * @returns {Object} 生成的内容
  */
 export async function generateContentGemini(desc, imgB64, platform = 'amazon') {
+  console.log('Gemini generation started with params:', { 
+    textLength: desc?.length, 
+    hasImage: !!imgB64,
+    platform
+  });
   try {
     const platformSpecificPrompt = `You are creating content for ${platform === 'amazon' ? 'Amazon' : 'eBay'} platform.`;
     
@@ -74,11 +79,13 @@ export async function generateContentGemini(desc, imgB64, platform = 'amazon') {
     }
     
     try {
-      return JSON.parse(text);
+      const result = JSON.parse(text);
+      console.log('Gemini generation completed successfully');
+      return result;
     } catch (parseError) {
       console.error("JSON解析错误，尝试使用替代格式:", parseError);
       // 如果解析失败，返回一个基本结构
-      return {
+      const fallbackResult = {
         title: desc.substring(0, 100),
         description: text,
         bulletPoints: [],
@@ -86,9 +93,12 @@ export async function generateContentGemini(desc, imgB64, platform = 'amazon') {
         category: [],
         itemSpecifics: {}
       };
+      console.log('Gemini generation completed but JSON parsing failed, returning fallback.');
+      return fallbackResult;
     }
   } catch (error) {
     console.error("Gemini API 调用错误:", error);
+    console.log('Gemini generation failed, throwing error.');
     throw new Error(`Gemini内容生成失败: ${error.message}`);
   }
 }

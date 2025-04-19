@@ -82,20 +82,23 @@ export default function App() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log("Form submitted, starting generation process");
     setIsLoading(true);
     setError(null);
     setResult(null);
     setTranslatedResult(null);
     
     try {
-      // 上传图片（如果有）
+      // Upload image if present
       let imagePath = null;
       if (productInfo.image) {
+        console.log("Uploading image...");
         const uploadResponse = await uploadImage(productInfo.image);
+        console.log("Image upload response:", uploadResponse);
         imagePath = uploadResponse.path;
       }
       
-      // 构建描述文本
+      // Build description text
       const text = `
         商品名称: ${productInfo.title}
         
@@ -103,12 +106,14 @@ export default function App() {
         
         ${productInfo.extraInfo ? `其他信息: ${productInfo.extraInfo}` : ''}
       `;
+      console.log("Sending to API:", { text, platform, imagePath, model });
       
-      // 生成内容
+      // Generate content
       const generatedContent = await generateContent(text, platform, imagePath, model);
+      console.log("API response:", generatedContent);
       setResult(generatedContent);
     } catch (err) {
-      console.error('处理出错:', err);
+      console.error('Error details:', err);
       setError(err.message || '提交失败，请稍后再试');
     } finally {
       setIsLoading(false);

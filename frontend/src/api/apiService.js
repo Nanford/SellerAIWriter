@@ -44,26 +44,28 @@ export const generateContent = async (text, platform = 'amazon', imagePath = nul
       model
     };
     
+    console.log("Sending payload to API:", payload);
     const response = await api.post('/generate', payload);
+    console.log("API response:", response);
     return response.data;
   } catch (error) {
-    console.error('内容生成失败:', error);
+    console.error('Content generation failed - Error object:', error);
+    console.error('Error response:', error.response);
+    console.error('Error request:', error.request);
     
-    // 尝试从错误响应中获取后备数据
+    // If available, display server error message
+    if (error.response && error.response.data && error.response.data.error) {
+      throw new Error(`服务器错误: ${error.response.data.error}`);
+    }
+    
+    // If server sent fallback data, use it
     if (error.response && error.response.data && error.response.data.fallbackData) {
-      console.log('使用后备数据:', error.response.data.fallbackData);
+      console.log('Using fallback data:', error.response.data.fallbackData);
       return error.response.data.fallbackData;
     }
     
-    // 如果没有后备数据，返回基本结构
-    return {
-      title: text ? text.substring(0, 100) : "生成失败",
-      description: "生成内容时发生错误，请稍后重试。错误信息: " + error.message,
-      bulletPoints: ["生成失败，请稍后重试"],
-      keywords: [],
-      category: [],
-      itemSpecifics: {}
-    };
+    // Otherwise throw the error to be caught by the component
+    throw error;
   }
 };
 
