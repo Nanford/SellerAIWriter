@@ -44,24 +44,63 @@ export async function generateContentOpenAI(text, imageBase64 = null, platform =
     try {
       console.log("调用OpenAI API...");
       
+      const platformName = platform === 'amazon' ? '亚马逊 (Amazon)' : 'eBay';
+      const platformSpecifics = platform === 'amazon' ? {
+        titleLength: "严格控制在 150 字符以内，优化以包含核心关键词",
+        descriptionFormat: "可以使用简单的 HTML 标签进行格式化 (如 <p>, <ul>, <li>, <b>)",
+        bulletPointsRequired: true,
+        keywordsPurpose: "生成一组后端搜索关键词 (Search Terms)，用于提高商品在亚马逊内部的搜索可见性，通常不直接展示给买家",
+        itemSpecificsImportance: "非常重要，请尽可能多地根据信息推断并填充"
+      } : {
+        titleLength: "严格控制在 80 字符以内，包含最重要关键词",
+        descriptionFormat: "通常为纯文本，保持段落清晰",
+        bulletPointsRequired: false, // eBay 无此专用字段，但可生成用于描述
+        keywordsPurpose: "生成一组适合嵌入标题和描述中的关键词，以提高搜索引擎可见性",
+        itemSpecificsImportance: "重要，尤其对于筛选功能，请根据信息推断"
+      };
+
+      const systemContent = `你是一位顶级的电商内容策略师和文案专家，尤其精通 ${platformName} 平台的规则和最佳实践。
+你的任务是分析用户提供的商品文本描述和商品图片（如果提供），然后生成一份完全符合 ${platformName} 平台要求且具有营销吸引力的商品信息 JSON 对象。
+
+**核心要求：**
+1.  **深度结合图文信息：** 仔细分析图片中的商品外观、细节、材质、使用场景等视觉信息，并将其与用户提供的文本描述相结合。
+2.  **平台规则遵从：** 严格遵守 ${platformName} 的具体要求，特别是标题长度、描述格式等。
+3.  **营销导向：** 生成的内容不仅要准确，还要能突出商品卖点，吸引潜在买家。
+4.  **JSON 输出：** 必须严格按照以下 JSON 结构返回结果，不要包含任何 markdown 代码块或其他解释性文本，直接输出纯粹的 JSON 对象。
+
+**JSON 结构及 ${platformName} 特定要求：**
+{
+  "title": "产品标题。${platformSpecifics.titleLength}。",
+  "description": "详细的产品描述。应包含产品特点、优势、规格、用途、适用场景等。${platformSpecifics.descriptionFormat}。",
+  ${platformSpecifics.bulletPointsRequired ?
+  `"bulletPoints": [
+    "卖点1: 简洁有力地概括一个核心优势",
+    "卖点2: 突出另一个独特功能或好处",
+    "卖点3: 说明材质、工艺或质量相关特点",
+    "卖点4: 强调易用性、兼容性或特殊设计",
+    "卖点5: 提及包装、配件或售后保障 (如果适用)"
+  ],` : `"bulletPoints": ["根据描述生成 3-5 个关键特性列表，用于丰富描述内容"],`}
+  "keywords": ["根据商品信息和目标平台生成一组关键词列表。${platformSpecifics.keywordsPurpose}。"],
+  "category": ["根据商品信息，建议 1-3 个最相关的 ${platformName} 分类路径。例如：'家居>厨房>餐具>碗'"],
+  "itemSpecifics": {
+    "品牌": "根据信息推断或填写 '通用'",
+    "材质": "根据图片和文本推断",
+    "颜色": "根据图片和文本推断",
+    "尺寸/规格": "根据图片和文本推断",
+    "风格": "根据图片和文本推断",
+    // 尝试推断更多 ${platformName} 平台常用的相关属性...
+    "${platform === 'amazon' ? '型号' : 'MPN'}": "尝试推断",
+    "${platform === 'amazon' ? '商品重量' : '物品重量'}": "尝试推断"
+    // ... 更多基于平台的属性
+  }
+}
+
+请基于用户提供的信息进行创作。`;
+
       const messages = [
         {
           role: 'system',
-          content: `你是一个专业的电商产品描述撰写专家，精通${platform === 'amazon' ? '亚马逊' : 'eBay'}平台的产品发布规则。
-请根据用户提供的信息，生成以下格式的JSON数据（不要包含markdown代码块，直接返回JSON）：
-{
-  "title": "产品标题，简洁有力，包含关键词，控制在80字符以内",
-  "description": "详细的产品描述，包含产品特点和卖点",
-  "bulletPoints": ["卖点1", "卖点2", "卖点3", "卖点4", "卖点5"],
-  "keywords": ["关键词1", "关键词2", "关键词3", ...],
-  "category": ["建议分类路径"],
-  "itemSpecifics": {
-    "品牌": "xx",
-    "材质": "xx",
-    "尺寸": "xx",
-    ...其他相关属性
-  }
-}`
+          content: systemContent
         }
       ];
 

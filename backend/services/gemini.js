@@ -15,23 +15,7 @@ const cleanedApiKey = apiKey ? apiKey.replace(/^["'](.*)["']$/, '$1') : '';
 
 // 初始化 GenAI 客户端
 const genAI = new GoogleGenerativeAI(cleanedApiKey);
-const client = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
-
-const systemPrompt = `You are an expert Amazon/eBay listing creator. You should generate product listing content based on the provided description and/or image. The output should be in JSON format with the following structure:
-{
-  "title": "Product title, concise and keyword-rich",
-  "description": "Detailed product description that highlights features and benefits",
-  "bulletPoints": ["Point 1", "Point 2", "Point 3", "Point 4", "Point 5"],
-  "keywords": ["keyword1", "keyword2", "keyword3", ...],
-  "category": ["Suggested category path"],
-  "itemSpecifics": {
-    "Brand": "value",
-    "Material": "value",
-    "Size": "value",
-    "Color": "value",
-    ...other relevant attributes
-  }
-}`;
+const client = genAI.getGenerativeModel({ model: "gemini-1.5-pro-latest" });
 
 /**
  * 生成电商内容
@@ -47,15 +31,69 @@ export async function generateContentGemini(desc, imgB64, platform = 'amazon') {
     platform
   });
   try {
-    const platformSpecificPrompt = `You are creating content for ${platform === 'amazon' ? 'Amazon' : 'eBay'} platform.`;
-    
-    // 准备提示和内容
-    const parts = [{
-      text: `${systemPrompt}\n${platformSpecificPrompt}\n${desc}`
-    }];
+    // Dynamically construct the prompt based on the platform
+    const platformName = platform === 'amazon' ? 'Amazon' : 'eBay';
+    const platformSpecifics = platform === 'amazon' ? {
+      titleLength: "Strictly within 150 characters, optimized with core keywords",
+      descriptionFormat: "Can use simple HTML tags for formatting (e.g., <p>, <ul>, <li>, <b>)",
+      bulletPointsRequired: true,
+      keywordsPurpose: "Generate a set of backend search terms to improve visibility within Amazon search, usually not shown directly to buyers",
+      itemSpecificsImportance: "Very important, infer and fill as many relevant attributes as possible based on the provided information"
+    } : {
+      titleLength: "Strictly within 80 characters, including the most important keywords",
+      descriptionFormat: "Usually plain text, keep paragraphs clear",
+      bulletPointsRequired: false, // eBay doesn't have a dedicated field, but can generate key features for the description
+      keywordsPurpose: "Generate a set of keywords suitable for embedding in the title and description to improve search engine visibility",
+      itemSpecificsImportance: "Important, especially for filtering features, infer based on information"
+    };
 
-    // 如果有图片，添加到内容中
+    const dynamicPrompt = `You are a top-tier e-commerce content strategist and copywriter, especially proficient in the rules and best practices of the ${platformName} platform.
+Your task is to analyze the provided product text description and product image (if provided), and then generate a product information JSON object that fully complies with ${platformName} platform requirements and possesses marketing appeal.
+
+**Core Requirements:**
+1.  **Deep Integration of Text and Image Info:** Carefully analyze visual information from the image such as product appearance, details, materials, usage scenarios, etc., and combine it with the provided text description.
+2.  **Platform Rule Compliance:** Strictly adhere to ${platformName}'s specific requirements, especially regarding title length, description format, etc.
+3.  **Marketing Orientation:** The generated content should not only be accurate but also highlight product selling points to attract potential buyers.
+4.  **JSON Output:** You MUST return the result strictly in the following JSON structure. Do not include any markdown code blocks or other explanatory text, just output the pure JSON object.
+
+**JSON Structure & ${platformName} Specific Requirements:**
+{
+  "title": "Product title. ${platformSpecifics.titleLength}.",
+  "description": "Detailed product description. Should include features, benefits, specifications, uses, applicable scenarios, etc. ${platformSpecifics.descriptionFormat}.",
+  ${platformSpecifics.bulletPointsRequired ?
+  `"bulletPoints": [
+    "Bullet 1: Concisely summarize a core advantage",
+    "Bullet 2: Highlight another unique feature or benefit",
+    "Bullet 3: Describe material, craftsmanship, or quality-related aspects",
+    "Bullet 4: Emphasize ease of use, compatibility, or special design",
+    "Bullet 5: Mention packaging, accessories, or after-sales support (if applicable)"
+  ],` : `"bulletPoints": ["Generate 3-5 key feature points based on the description to enrich the content"],`}
+  "keywords": ["Generate a list of keywords based on product information and the target platform. ${platformSpecifics.keywordsPurpose}."],
+  "category": ["Based on the product information, suggest 1-3 most relevant ${platformName} category paths. Example: 'Home & Kitchen > Kitchen & Dining > Tableware > Bowls'"],
+  "itemSpecifics": {
+    "Brand": "Infer from information or fill in 'Unbranded'/'Generic'",
+    "Material": "Infer from image and text",
+    "Color": "Infer from image and text",
+    "Size/Dimensions": "Infer from image and text",
+    "Style": "Infer from image and text",
+    // Try to infer more relevant attributes common on the ${platformName} platform...
+    "${platform === 'amazon' ? 'Model Number' : 'MPN'}": "Try to infer",
+    "${platform === 'amazon' ? 'Item Weight' : 'Weight'}": "Try to infer"
+    // ... more platform-based attributes
+  }
+}
+
+Please create based on the user-provided information. Ensure the output is a single, valid JSON object only.`;
+
+    // Prepare parts for the API call
+    const parts = [
+      { text: dynamicPrompt },
+      { text: `\nProduct Description: ${desc}` } // Clearly label the user's text description
+    ];
+
+    // If an image is provided, add it to the parts array
     if (imgB64) {
+      parts.push({ text: "\nProduct Image:" }); // Label the image part
       parts.push({
         inlineData: {
           mimeType: "image/jpeg",

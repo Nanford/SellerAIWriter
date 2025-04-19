@@ -25,80 +25,68 @@ const safeReadFile = (filePath) => {
  * 处理生成请求的路由
  */
 router.post('/generate', async (req, res) => {
-  console.log('收到生成请求:', req.body);
+  console.log('📥 Received generate request:', req.body);
   
   try {
     const { text, platform = 'amazon', imagePath, model = 'openai' } = req.body;
     
-    // 强制禁用本地模式，确保使用API
-    const useLocalMode = false;  
+    console.log('🔍 Processing request parameters:');
+    console.log('- Text:', text ? text.substring(0, 50) + '...' : 'None');
+    console.log('- Platform:', platform);
+    console.log('- Image Path:', imagePath || 'None');
+    console.log('- Model:', model);
     
-    if (useLocalMode) {
-      console.log('使用本地模式生成数据');
-      // 返回预设数据
-      return res.json({
-        title: `${platform === 'amazon' ? 'Amazon' : 'eBay'} - ${text ? text.substring(0, 50) : '商品'}...`,
-        description: `这是一个自动生成的商品描述。由于网络连接问题，无法访问AI服务。\n\n${text || ''}`,
-        bulletPoints: [
-          "这是第一个卖点",
-          "这是第二个卖点",
-          "这是第三个卖点",
-          "这是第四个卖点",
-          "这是第五个卖点"
-        ],
-        keywords: ["关键词1", "关键词2", "关键词3"],
-        category: ["示例分类"],
-        itemSpecifics: {
-          "品牌": "示例品牌",
-          "材质": "示例材质",
-          "尺寸": "示例尺寸"
-        }
-      });
-    }
-    
-    if (!text && !imagePath) {
-      return res.status(400).json({ error: '缺少文本或图片内容' });
-    }
-    
+    // Check for image
     let imageBase64 = null;
     if (imagePath) {
       try {
-        const imageBuffer = safeReadFile(imagePath);
+        console.log('🖼️ Attempting to read image from:', imagePath);
+        const imageBuffer = safeReadFile(imagePath); // Assuming safeReadFile is defined elsewhere
         if (imageBuffer) {
           imageBase64 = imageBuffer.toString('base64');
-          console.log('图片已成功转换为Base64格式');
+          console.log('✅ Image successfully loaded and converted to Base64');
         } else {
-          console.error('无法读取图片或图片为空');
+          console.error('❌ Image file not found or empty at path:', imagePath);
         }
       } catch (fileError) {
-        console.error('处理图片错误:', fileError);
-        // 继续处理，不让图片错误阻止整个请求
+        console.error('❌ Error processing image:', fileError);
+        // Decide if you want to proceed without the image or return an error
+        // For now, we'll proceed without the image
       }
     }
     
-    console.log(`将使用 ${model} 模型进行内容生成`);
+    console.log(`🤖 Will use ${model} model for content generation`);
     
     let result;
+    console.log('🚀 Calling API...');
+    const startTime = Date.now();
+    
     if (model === 'gemini') {
-      console.log('调用Gemini API...');
+      console.log('📡 Calling Gemini API...');
       result = await generateContentGemini(text || "", imageBase64, platform);
     } else {
-      console.log('调用OpenAI API...');
+      console.log('📡 Calling OpenAI API...');
       result = await generateContentOpenAI(text || "", imageBase64, platform);
     }
     
-    console.log('API调用成功，返回结果');
+    const endTime = Date.now();
+    console.log(`✅ API call completed in ${(endTime - startTime) / 1000} seconds`);
+    console.log('📤 Returning result to client');
+    
     res.json(result);
   } catch (error) {
-    console.error('生成错误:', error);
-    // 服务器错误时也返回一个可用的响应结构
+    console.error('❌ Error in generation:', error);
+    console.error('Error stack:', error.stack);
+    
+    // Send a meaningful error response
     res.status(500).json({ 
-      error: '内容生成失败', 
+      error: 'Content generation failed', 
       details: error.message,
+      // Include fallback data
       fallbackData: {
-        title: "生成失败 - 请重试",
-        description: "由于服务器错误，无法生成内容。请稍后重试或检查服务器日志获取详细信息。",
-        bulletPoints: ["服务器处理请求时出错"],
+        title: "Generation Error",
+        description: "Failed to generate content. Error: " + error.message,
+        bulletPoints: ["Error occurred during generation"],
         keywords: [],
         category: [],
         itemSpecifics: {}
