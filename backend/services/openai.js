@@ -44,7 +44,7 @@ export async function generateContentOpenAI(text, imageBase64 = null, platform =
       let responseFormat = { type: 'json_object' }; // Default format
 
       if (platform === 'ebay') {
-        // --- eBay Specific Prompt (using JSON string to avoid issues) --- 
+        // --- Revised eBay Specific Prompt --- 
         systemContent = 
 `你是一名精通 eBay 平台规则、SEO 优化与产品文案的中文内容专家。
 现在请根据用户提供的「产品要素」（结合图片和文本信息）为我生成 eBay 上架资料，只用简体中文。
@@ -52,7 +52,7 @@ export async function generateContentOpenAI(text, imageBase64 = null, platform =
 【输出结构】
 严格按照以下 JSON 结构输出，不要包含任何 markdown 代码块或其他解释性文本，直接输出纯粹的 JSON 对象:
 {
-  "title": "商品标题（Title）。要求：≤ 80 字符（含空格），必须包含品类关键词、1-2 个核心卖点、尺寸或层数等硬信息。",
+  "title": "商品标题（Title）。要求：≤ 80 字符，含品类关键词、1-2 核心卖点、硬信息（如尺寸/层数）。",
   "bulletPoints": [
     "五点描述（Bullet Points）第一点。格式：'**加粗卖点词**: 简短说明'。要求：每条 20–40 字符。",
     "五点描述第二点。格式同上。",
@@ -60,13 +60,26 @@ export async function generateContentOpenAI(text, imageBase64 = null, platform =
     "五点描述第四点。格式同上。",
     "五点描述第五点。格式同上。"
   ],
-  "description": "商品描述（Product Description）。要求：用 HTML 段落输出，段落标题用 <h3>，正文用 <p>。首段总体卖点，其余段依次阐述材质/容量/功能/安装/保养等信息。",
-  "keywords": ["搜索关键词（Search Terms）。要求：5–10 个英文术语，用英文逗号分隔。确保关键词不在最终的中文标题中重复。"],
-  "category": "分类建议（Category Path）。要求：仅提供一条最相关的英文 eBay 类目完整路径。",
-  "itemSpecifics": "物品属性表（Item Specifics）。要求：生成一个 Markdown 格式的表格字符串，包含以下列：Brand, Type, Style, Material, Color, Dimensions, Weight, Features, Room, Assembly Required。根据产品要素填充，未知信息可留空或写'N/A'。示例：'| Brand | Type | Style | Material | Color | Dimensions | Weight | Features | Room | Assembly Required |\\n|---|---|---|---|---|---|---|---|---|---|\\n| Unbranded | Serving Cart | Industrial | Metal+Wood | Black+Gray | 80x40x90cm | ~10kg | Removable Tray, Wheels | Kitchen, Living Room | Yes |'",
+  "description": "商品描述（Product Description）。要求：用 HTML 段落输出 (<h3>标题</h3><p>内容...</p>)。结构：首段总结，后续段落依次阐述材质/容量/功能/安装/保养等。",
+  "keywords": ["搜索关键词数组（Search Terms）。要求：返回一个包含 5–10 个相关英文术语的字符串数组。确保关键词不在最终的中文标题中重复。"],
+  "category": "分类建议（Category Path）。要求：仅提供一条最相关的英文 eBay 类目完整路径（字符串）。",
+  "itemSpecifics": { 
+    "要求": "物品属性对象（Item Specifics）。生成一个包含相关属性键值对的 JSON 对象。必须包含 Brand, Type, Style, Material, Color, Dimensions, Weight, Features, Room, Assembly Required 这些键（如果信息可用）。根据产品要素填充，未知信息可留空或写'N/A'。",
+    "Brand": "Unbranded 或推断出的品牌",
+    "Type": "产品类型，例如 Serving Cart, Storage Rack",
+    "Style": "风格，例如 Industrial, Modern",
+    "Material": "主要材质，例如 Metal+Wood",
+    "Color": "颜色",
+    "Dimensions": "尺寸 (长x宽x高)",
+    "Weight": "重量 (大约值)",
+    "Features": "特色功能，多个请用逗号分隔",
+    "Room": "适用房间",
+    "Assembly Required": "是否需要组装 (Yes/No)"
+    // ... 可根据产品添加其他相关属性
+  },
   "tips": [
-    "温馨提示第一条。要求：列表形式，说明拍摄道具不随货等注意事项。",
-    "温馨提示第二条（如果需要）。"
+    "温馨提示数组。要求：列表形式，说明拍摄道具不随货等注意事项。",
+    "第二条提示（如果需要）。"
   ]
 }
 
@@ -109,9 +122,10 @@ export async function generateContentOpenAI(text, imageBase64 = null, platform =
     "五点描述（Bullet Point 4）: 强调易用性、兼容性或特殊设计",
     "五点描述（Bullet Point 5）: 提及包装、配件或售后保障 (如果适用)"
   ],
-  "keywords": ["关键词列表。${platformSpecifics.keywordsPurpose}。"],
-  "category": ["分类建议。建议 1-3 个最相关的 ${platformName} 分类路径。例如：'家居>厨房>餐具>碗'"],
+  "keywords": ["关键词数组。${platformSpecifics.keywordsPurpose}。"],
+  "category": ["分类建议数组。建议 1-3 个最相关的 ${platformName} 分类路径。例如：'家居>厨房>餐具>碗'"],
   "itemSpecifics": {
+    "要求": "${platformSpecifics.itemSpecificsImportance}",
     "品牌": "根据信息推断或填写 '通用'",
     "材质": "根据图片和文本推断",
     "颜色": "根据图片和文本推断",
@@ -211,7 +225,7 @@ ${text}`
       };
       if (platform === 'ebay') {
         errorPayload.category = '';
-        errorPayload.itemSpecifics = `| Error |\n|---|\n| ${error.message.replace(/\|/g, '\\|')} |`; // Escape pipe characters in error message
+        errorPayload.itemSpecifics = { Error: error.message };
         errorPayload.tips = [`错误: ${error.message}`];
       } else {
         errorPayload.category = [];
@@ -231,7 +245,7 @@ ${text}`
   };
   if (platform === 'ebay') {
         finalErrorPayload.category = '';
-        finalErrorPayload.itemSpecifics = `| Error |\n|---|\n| Complete Failure |`;
+        finalErrorPayload.itemSpecifics = { Error: 'Complete Failure' };
         finalErrorPayload.tips = ['错误: 完全失败'];
   } else {
         finalErrorPayload.category = [];

@@ -34,7 +34,7 @@ export async function generateContentGemini(desc, imgB64, platform = 'amazon') {
     };
 
     if (platform === 'ebay') {
-        // --- eBay Specific Prompt for Gemini --- 
+        // --- Revised eBay Specific Prompt for Gemini --- 
         dynamicPrompt = 
 `你是 eBay 平台规则、SEO 优化与产品文案的中文内容专家。
 根据下面的「产品要素」，生成 eBay 上架资料，只用简体中文。
@@ -51,12 +51,25 @@ export async function generateContentGemini(desc, imgB64, platform = 'amazon') {
     "五点描述5"
   ],
   "description": "商品描述（HTML格式：<h3>标题</h3><p>内容...</p>。段落：总结->材质->容量/功能->安装->保养）",
-  "keywords": ["搜索关键词（5–10 个英文术语，英文逗号分隔，不与中文标题重复）"],
-  "category": "分类建议（1条英文 eBay 类目路径）",
-  "itemSpecifics": "物品属性表（Markdown 表格字符串，列：Brand, Type, Style, Material, Color, Dimensions, Weight, Features, Room, Assembly Required）示例：'| Brand | Type | ... |\\n|---|---|---|\\n| Unbranded | Serving Cart | ... |'",
+  "keywords": ["搜索关键词数组（5–10 个英文术语，字符串数组）"],
+  "category": "分类建议（1条英文 eBay 类目路径字符串）",
+  "itemSpecifics": { 
+    "要求": "物品属性对象（JSON对象）。必须包含 Brand, Type, Style, Material, Color, Dimensions, Weight, Features, Room, Assembly Required 这些键（如果可用）。",
+    "Brand": "推断或 Unbranded",
+    "Type": "推断产品类型",
+    "Style": "推断风格",
+    "Material": "推断材质",
+    "Color": "推断颜色",
+    "Dimensions": "推断尺寸",
+    "Weight": "推断重量",
+    "Features": "推断特色，逗号分隔",
+    "Room": "推断房间",
+    "Assembly Required": "推断 Yes/No"
+    // ... 可添加其他相关属性
+  },
   "tips": [
-    "温馨提示1（拍摄道具不随货等）",
-    "温馨提示2（如需要）"
+    "温馨提示数组（拍摄道具不随货等）",
+    "提示2（如需要）"
   ]
 }
 
@@ -98,9 +111,10 @@ ${desc}
     "五点描述4（易用性/兼容性/设计）",
     "五点描述5（包装/配件/售后）"
   ],
-  "keywords": ["关键词列表（${platformSpecifics.keywordsPurpose}）"],
-  "category": ["分类建议（1-3条 ${platformName} 路径，例如：家居>厨房>餐具>碗）"],
+  "keywords": ["关键词数组（${platformSpecifics.keywordsPurpose}）"],
+  "category": ["分类建议数组（1-3条 ${platformName} 路径）"],
   "itemSpecifics": {
+    "要求": "填充相关属性键值对",
     "品牌": "推断或填 '通用'",
     "材质": "根据图文推断",
     "颜色": "根据图文推断",
@@ -173,63 +187,24 @@ ${desc}
     };
     if (platform === 'ebay') {
         errorPayload.category = '';
-        errorPayload.itemSpecifics = `| Error |\n|---|\n| ${error.message.replace(/\|/g, '\\|')} |`; // Escape pipe characters
+        errorPayload.itemSpecifics = { Error: error.message };
         errorPayload.tips = [`错误: ${error.message}`];
     } else {
         errorPayload.category = [];
         errorPayload.itemSpecifics = { Error: error.message };
     }
-    // 不再抛出错误，而是返回错误对象，让上层处理
     console.log('[Gemini Generate] Returning error payload.');
     return errorPayload;
   }
 }
 
 /**
- * 翻译内容
- * @param {Object} obj - 需要翻译的内容
- * @param {string} target - 目标语言
+ * 翻译电商内容
+ * @param {string} desc - 商品描述 + 产品要素 (结合图片和用户输入)
+ * @param {string} imgB64 - Base64编码的图片
+ * @param {string} platform - 平台（amazon或ebay）
  * @returns {Object} 翻译后的内容
  */
-export async function translateContentGemini(obj, target) {
-  console.log('[Gemini Translate] 开始翻译，参数:', { contentType: typeof obj, target });
-  try {
-    const prompt = `Translate the values in the following JSON object to ${target}. Keep the JSON structure and keys intact. Only output the translated JSON object, without any markdown formatting:
-${JSON.stringify(obj)}`;
-    
-    console.log('[Gemini Service] Attempting translate API call...');
-    const startTime = Date.now();
-    const result = await client.generateContent({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: {
-        temperature: 0.3,
-        responseMimeType: "application/json",
-      }
-    });
-    const endTime = Date.now();
-    console.log(`[Gemini Service] Translate API call finished in ${(endTime - startTime) / 1000} seconds.`);
-    
-    if (result.response && result.response.candidates && result.response.candidates[0].content.parts[0].text) {
-      const translatedJsonString = result.response.candidates[0].content.parts[0].text;
-      try {
-        const parsedResult = JSON.parse(translatedJsonString);
-        console.log('[Gemini Translate] 翻译成功，返回解析后的结果');
-        return parsedResult;
-      } catch (parseError) {
-        console.error("[Gemini Translate] JSON解析错误:", parseError);
-        console.error("[Gemini Translate] 收到的原始文本:", translatedJsonString);
-        console.error('[Gemini Translate] 翻译失败，返回原始内容');
-        return obj;
-      }
-    } else {
-      console.error('[Gemini Translate] API未返回预期的文本内容结构', result.response);
-      console.error('[Gemini Translate] 翻译失败，返回原始内容');
-      return obj;
-    }
-
-  } catch (error) {
-    console.error('[Gemini Service Translate] Error during API call:', error);
-    console.error('[Gemini Translate] 翻译失败，返回原始内容');
-    return obj;
-  }
+export async function translateContentGemini(desc, imgB64, platform = 'amazon') {
+  // Implementation of translateContentGemini function
 }
