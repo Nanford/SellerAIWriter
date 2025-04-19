@@ -148,33 +148,44 @@ Please create based on the user-provided information. Ensure the output is a sin
  * @returns {Object} 翻译后的内容
  */
 export async function translateContentGemini(obj, target) {
+  console.log('[Gemini Translate] 开始翻译，参数:', { contentType: typeof obj, target });
   try {
+    const prompt = `Translate the values in the following JSON object to ${target}. Keep the JSON structure and keys intact. Only output the translated JSON object, without any markdown formatting:
+${JSON.stringify(obj)}`;
+    
     console.log('[Gemini Service] Attempting translate API call...');
+    const startTime = Date.now();
     const result = await client.generateContent({
-      contents: [{ 
-        text: `Translate following JSON to ${target} (keep keys intact):\n${JSON.stringify(obj)}` 
-      }],
+      contents: [{ parts: [{ text: prompt }] }],
       generationConfig: {
-        temperature: 0.3
+        temperature: 0.3,
+        responseMimeType: "application/json",
       }
     });
+    const endTime = Date.now();
+    console.log(`[Gemini Service] Translate API call finished in ${(endTime - startTime) / 1000} seconds.`);
     
-    // 确保获取到文本内容并安全解析
-    const text = result.response.text();
-    if (!text) {
-      throw new Error("翻译API返回的响应为空");
-    }
-    
-    try {
-      console.log('[Gemini Service] Translate API call finished.');
-      return JSON.parse(text);
-    } catch (parseError) {
-      console.error("翻译JSON解析错误:", parseError);
-      // 如果解析失败，尝试基于原始数据返回一个简单翻译
+    if (result.response && result.response.candidates && result.response.candidates[0].content.parts[0].text) {
+      const translatedJsonString = result.response.candidates[0].content.parts[0].text;
+      try {
+        const parsedResult = JSON.parse(translatedJsonString);
+        console.log('[Gemini Translate] 翻译成功，返回解析后的结果');
+        return parsedResult;
+      } catch (parseError) {
+        console.error("[Gemini Translate] JSON解析错误:", parseError);
+        console.error("[Gemini Translate] 收到的原始文本:", translatedJsonString);
+        console.error('[Gemini Translate] 翻译失败，返回原始内容');
+        return obj;
+      }
+    } else {
+      console.error('[Gemini Translate] API未返回预期的文本内容结构', result.response);
+      console.error('[Gemini Translate] 翻译失败，返回原始内容');
       return obj;
     }
+
   } catch (error) {
-    console.error("Gemini 翻译API调用错误:", error);
-    throw new Error(`Gemini翻译失败: ${error.message}`);
+    console.error('[Gemini Service Translate] Error during API call:', error);
+    console.error('[Gemini Translate] 翻译失败，返回原始内容');
+    return obj;
   }
 }

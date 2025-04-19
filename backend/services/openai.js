@@ -201,6 +201,11 @@ export async function translateContentOpenAI(content, targetLanguage) {
   const maxRetries = 3;
   const baseDelay = 1000; // 1秒
   
+  console.log('[OpenAI Translate] 开始翻译，参数:', { 
+    contentType: typeof content, 
+    targetLanguage
+  });
+  
   while (retryCount <= maxRetries) {
     try {
       const languageMap = {
@@ -221,18 +226,22 @@ export async function translateContentOpenAI(content, targetLanguage) {
         }
       ];
 
-      console.log('[OpenAI Service] Attempting translate API call...');
+      console.log('[OpenAI Service] Attempting translate API call... Attempt:', retryCount + 1);
+      const startTime = Date.now();
       const response = await openai.chat.completions.create({
         model: 'gpt-4o',
         messages,
         temperature: 0.3,
         response_format: { type: 'json_object' }
       });
-      console.log('[OpenAI Service] Translate API call finished.');
+      const endTime = Date.now();
+      console.log(`[OpenAI Service] Translate API call finished in ${(endTime - startTime) / 1000} seconds.`);
 
-      return JSON.parse(response.choices[0].message.content);
+      const parsedResult = JSON.parse(response.choices[0].message.content);
+      console.log('[OpenAI Translate] 翻译成功，返回解析后的结果');
+      return parsedResult;
     } catch (error) {
-      console.error("OpenAI翻译API错误:", error);
+      console.error(`[OpenAI Service Translate] Error during API call (Attempt ${retryCount + 1}):`, error);
       
       // 增加重试逻辑，仅对连接和超时错误进行重试
       if (
@@ -241,6 +250,7 @@ export async function translateContentOpenAI(content, targetLanguage) {
            (error.cause.code === 'ETIMEDOUT' || 
             error.cause.code === 'ECONNRESET' || 
             error.cause.code === 'ECONNREFUSED')) ||
+          (error instanceof OpenAI.APIError && (error.status === 429 || error.status >= 500)) || // Add retry for rate limits and server errors
           error.message.includes('timeout') ||
           error.message.includes('network') ||
           error.message.includes('connection')
@@ -248,13 +258,17 @@ export async function translateContentOpenAI(content, targetLanguage) {
       ) {
         retryCount++;
         const retryDelay = baseDelay * Math.pow(2, retryCount); // 指数退避策略
-        console.log(`翻译API第${retryCount}次重试，等待${retryDelay}毫秒...`);
+        console.log(`[OpenAI Service Translate] 第${retryCount}次重试，等待${retryDelay}毫秒...`);
         await delay(retryDelay);
         continue;
       }
       
-      // 翻译失败时返回原内容
-      return content;
+      // 如果重试耗尽或非可重试错误
+      console.error('[OpenAI Translate] 翻译失败，达到最大重试次数或遇到不可重试错误，将返回原始内容');
+      return content; // 返回原始 content
     }
   }
+  // 如果循环结束（理论上不应发生，除非maxRetries=0且第一次就失败且不可重试）
+  console.error('[OpenAI Translate] 翻译流程异常结束，返回原始内容');
+  return content;
 }

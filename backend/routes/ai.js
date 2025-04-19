@@ -99,78 +99,35 @@ router.post('/generate', async (req, res) => {
  * 处理翻译请求的路由
  */
 router.post('/translate', async (req, res) => {
+  console.log('[Translate Route] 收到翻译请求:', req.body);
   try {
     const { content, targetLanguage, model = 'openai' } = req.body;
     
-    // 强制禁用本地模式，确保使用API
-    const useLocalMode = false;
-    
-    if (useLocalMode) {
-      // 为不同语言返回简单翻译示例
-      const demoTranslations = {
-        en: {
-          title: "English Translation Example",
-          description: "This is an example of translated content in English.",
-          bulletPoints: ["Point 1", "Point 2", "Point 3", "Point 4", "Point 5"],
-          keywords: ["keyword1", "keyword2", "keyword3"],
-          category: ["Example Category"],
-          itemSpecifics: content.itemSpecifics || {}
-        },
-        de: {
-          title: "Beispiel für deutsche Übersetzung",
-          description: "Dies ist ein Beispiel für übersetzte Inhalte auf Deutsch.",
-          bulletPoints: ["Punkt 1", "Punkt 2", "Punkt 3", "Punkt 4", "Punkt 5"],
-          keywords: ["Schlüsselwort1", "Schlüsselwort2", "Schlüsselwort3"],
-          category: ["Beispielkategorie"],
-          itemSpecifics: content.itemSpecifics || {}
-        },
-        fr: {
-          title: "Exemple de traduction française",
-          description: "Voici un exemple de contenu traduit en français.",
-          bulletPoints: ["Point 1", "Point 2", "Point 3", "Point 4", "Point 5"],
-          keywords: ["mot-clé1", "mot-clé2", "mot-clé3"],
-          category: ["Catégorie d'exemple"],
-          itemSpecifics: content.itemSpecifics || {}
-        },
-        it: {
-          title: "Esempio di traduzione italiana",
-          description: "Questo è un esempio di contenuto tradotto in italiano.",
-          bulletPoints: ["Punto 1", "Punto 2", "Punto 3", "Punto 4", "Punto 5"],
-          keywords: ["parola chiave1", "parola chiave2", "parola chiave3"],
-          category: ["Categoria di esempio"],
-          itemSpecifics: content.itemSpecifics || {}
-        }
-      };
-      
-      return res.json(demoTranslations[targetLanguage] || demoTranslations.en);
-    }
-    
     if (!content || !targetLanguage) {
+      console.error('[Translate Route] 错误: 缺少内容或目标语言');
       return res.status(400).json({ error: '缺少内容或目标语言' });
     }
     
-    console.log(`将使用 ${model} 模型进行翻译到 ${targetLanguage}`);
+    console.log(`[Translate Route] 将使用 ${model} 模型进行翻译到 ${targetLanguage}`);
     
     let result;
-    console.log(`[Translate Route] Calling ${model} service...`); // Log before
+    console.log(`[Translate Route] Calling ${model} service...`); // <--- 添加日志：调用服务前
     if (model === 'gemini') {
-      console.log('调用Gemini API进行翻译...');
       result = await translateContentGemini(content, targetLanguage);
     } else {
-      console.log('调用OpenAI API进行翻译...');
       result = await translateContentOpenAI(content, targetLanguage);
     }
-    console.log(`[Translate Route] ${model} service call returned.`); // Log after
+    console.log(`[Translate Route] ${model} service call returned.`); // <--- 添加日志：调用服务后
     
-    console.log('翻译API调用成功，返回结果');
+    console.log('[Translate Route] 翻译API调用成功，返回结果给客户端');
     res.json(result);
   } catch (error) {
-    console.error('[Translate Route] Caught error:', error); // Ensure errors here are logged
-    console.error('翻译错误:', error);
+    // 确保捕获到任何未预料的错误并记录
+    console.error('[Translate Route] 处理翻译请求时发生未捕获错误:', error);
+    console.error('[Translate Route] 错误堆栈:', error.stack);
     res.status(500).json({ 
-      error: '翻译失败', 
+      error: '翻译失败（路由层）', 
       details: error.message,
-      // 返回原始内容作为后备
       fallbackData: req.body.content || {}
     });
   }
