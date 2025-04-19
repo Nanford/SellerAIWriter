@@ -149,6 +149,7 @@ Please create based on the user-provided information. Ensure the output is a sin
  */
 export async function translateContentGemini(obj, target) {
   try {
+    console.log('[Gemini Service] Attempting translate API call...');
     const result = await client.generateContent({
       contents: [{ 
         text: `Translate following JSON to ${target} (keep keys intact):\n${JSON.stringify(obj)}` 
@@ -165,6 +166,7 @@ export async function translateContentGemini(obj, target) {
     }
     
     try {
+      console.log('[Gemini Service] Translate API call finished.');
       return JSON.parse(text);
     } catch (parseError) {
       console.error("翻译JSON解析错误:", parseError);

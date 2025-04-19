@@ -58,26 +58,24 @@ app.post("/api/upload", upload.single("image"), (req, res) => {
       return res.status(400).json({ success: false, error: "没有上传文件" });
     }
 
-    // 1. 构造文件名和路径
-    const originalname = req.file.originalname || 'uploaded_image';
-    const extension = path.extname(originalname);
-    const filename = `${Date.now()}-${path.basename(originalname, extension)}${extension}`;
-    const filePath = path.join(uploadsDir, filename);
-    const relativePath = `/uploads/${filename}`; // 前端将使用的路径
+    // 当使用 diskStorage 时, Multer 已经将文件保存
+    // req.file.filename 包含了保存在 uploads/ 目录下的唯一文件名
+    // req.file.path 包含了完整的服务器文件系统路径
 
-    // 2. 将内存缓冲区写入文件
-    fs.writeFileSync(filePath, req.file.buffer);
-    console.log(`Image saved to: ${filePath}`);
+    // 只需要返回前端可以访问的相对 URL 路径即可
+    const relativePath = `/uploads/${req.file.filename}`; 
+    console.log(`Image uploaded via diskStorage, accessible at: ${relativePath}`);
 
-    // 3. 返回成功响应和文件相对路径
+    // 返回成功响应和文件相对路径
     res.json({ 
       success: true, 
       message: "文件上传成功",
-      path: relativePath // 返回相对路径，因为我们配置了静态服务
+      path: relativePath 
     });
-  } catch (error) { // 确保捕获写入错误
-    console.error("上传错误 - 保存文件失败:", error);
-    res.status(500).json({ success: false, error: "文件上传失败", details: error.message });
+    
+  } catch (error) { // 这个 catch 块现在主要捕获 Multer 本身的错误（虽然它通常会传递给 next）
+    console.error("上传中间件或后续处理错误:", error);
+    res.status(500).json({ success: false, error: "文件上传处理失败", details: error.message });
   }
 });
 

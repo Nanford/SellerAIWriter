@@ -221,12 +221,14 @@ export async function translateContentOpenAI(content, targetLanguage) {
         }
       ];
 
+      console.log('[OpenAI Service] Attempting translate API call...');
       const response = await openai.chat.completions.create({
         model: 'gpt-4o',
         messages,
         temperature: 0.3,
         response_format: { type: 'json_object' }
       });
+      console.log('[OpenAI Service] Translate API call finished.');
 
       return JSON.parse(response.choices[0].message.content);
     } catch (error) {

@@ -152,6 +152,7 @@ router.post('/translate', async (req, res) => {
     console.log(`将使用 ${model} 模型进行翻译到 ${targetLanguage}`);
     
     let result;
+    console.log(`[Translate Route] Calling ${model} service...`); // Log before
     if (model === 'gemini') {
       console.log('调用Gemini API进行翻译...');
       result = await translateContentGemini(content, targetLanguage);
@@ -159,10 +160,12 @@ router.post('/translate', async (req, res) => {
       console.log('调用OpenAI API进行翻译...');
       result = await translateContentOpenAI(content, targetLanguage);
     }
+    console.log(`[Translate Route] ${model} service call returned.`); // Log after
     
     console.log('翻译API调用成功，返回结果');
     res.json(result);
   } catch (error) {
+    console.error('[Translate Route] Caught error:', error); // Ensure errors here are logged
     console.error('翻译错误:', error);
     res.status(500).json({ 
       error: '翻译失败', 
