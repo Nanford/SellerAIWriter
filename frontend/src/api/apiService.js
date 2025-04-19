@@ -76,28 +76,22 @@ export const generateContent = async (text, platform = 'amazon', imagePath = nul
  * @param {string} model - 使用的AI模型 (openai | gemini)
  * @returns {Promise<Object>} 翻译后的内容
  */
-export const translateContent = async (content, targetLanguage, model = 'openai') => {
-  try {
-    const payload = {
-      content,
-      targetLanguage,
-      model
-    };
-    
-    const response = await api.post('/translate', payload);
-    return response.data;
-  } catch (error) {
-    console.error('翻译失败:', error);
-    
-    // 尝试从错误响应中获取后备数据
-    if (error.response && error.response.data && error.response.data.fallbackData) {
-      return error.response.data.fallbackData;
-    }
-    
-    // 如果没有后备数据，返回原始内容
-    alert(`翻译失败: ${error.message}`);
+export const translateContent = async (content, targetLanguage, model) => {
+  console.log('Translating content with params:', { targetLanguage, model, contentType: typeof content });
+  const response = await fetch(`${API_BASE_URL}/translate`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ content, targetLanguage, model }),
+  });
+
+  if (!response.ok) {
+    console.error('翻译失败:', response.statusText);
     return content;
   }
+
+  return response.json();
 };
 
 /**
