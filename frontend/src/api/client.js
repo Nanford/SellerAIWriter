@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:4000/api';
+const API_URL = 'http://localhost:8090/api';
 
 // 创建axios实例
 const api = axios.create({

@@ -60,5 +60,5 @@ if (!fs.existsSync("uploads")) {
   fs.mkdirSync("uploads");
 }
 
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 8090;
 app.listen(PORT, () => console.log(`✅ API服务器运行在 http://localhost:${PORT}`));
