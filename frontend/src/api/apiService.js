@@ -78,20 +78,27 @@ export const generateContent = async (text, platform = 'amazon', imagePath = nul
  */
 export const translateContent = async (content, targetLanguage, model) => {
   console.log('Translating content with params:', { targetLanguage, model, contentType: typeof content });
-  const response = await fetch(`${API_BASE_URL}/translate`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ content, targetLanguage, model }),
-  });
-
-  if (!response.ok) {
-    console.error('翻译失败:', response.statusText);
-    return content;
+  try {
+    const payload = {
+      content,
+      targetLanguage,
+      model // 确保 model 包含在 payload 中
+    };
+    
+    const response = await api.post('/translate', payload);
+    return response.data;
+  } catch (error) {
+    console.error('翻译失败:', error);
+    // 尝试从错误响应中获取后备数据或返回原始内容
+    if (error.response && error.response.data && error.response.data.fallbackData) {
+      console.warn('Translation API failed, using fallback data.');
+      return error.response.data.fallbackData;
+    } else {
+      console.warn('Translation API failed, returning original content.');
+      // 返回原始 content 以避免 UI 崩溃，并在控制台警告
+      return content;
+    }
   }
-
-  return response.json();
 };
 
 /**
