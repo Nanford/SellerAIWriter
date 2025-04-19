@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Upload, Trash2, Languages, Database, Save } from "lucide-react";
+import { Upload, Trash2, Languages, Database, Save, Maximize2, Copy } from "lucide-react";
 import ContentBox from "./components/ContentBox.jsx";
 import BulletPoints from "./components/BulletPoints.jsx";
 import ItemSpecifics from "./components/ItemSpecifics.jsx";
@@ -34,6 +34,7 @@ export default function App() {
   const [result, setResult] = useState(null);
   const [translatedResult, setTranslatedResult] = useState(null);
   const [error, setError] = useState(null);
+  const [translateAll, setTranslateAll] = useState(false);
   const [expandedSections, setExpandedSections] = useState({
     title: false,
     description: false,
@@ -87,6 +88,15 @@ export default function App() {
     setError(null);
     setResult(null);
     setTranslatedResult(null);
+    setTranslateAll(false);
+    setExpandedSections({
+      title: false,
+      description: false,
+      bulletPoints: false,
+      keywords: false,
+      category: false,
+      itemSpecifics: false
+    });
     
     try {
       // Upload image if present
@@ -112,6 +122,12 @@ export default function App() {
       const generatedContent = await generateContent(text, platform, imagePath, model);
       console.log("API response:", generatedContent);
       setResult(generatedContent);
+      setExpandedSections(prev => ({ 
+        ...prev, 
+        title: true, 
+        description: true, 
+        bulletPoints: true 
+      }));
     } catch (err) {
       console.error('Error details:', err);
       setError(err.message || '提交失败，请稍后再试');
@@ -127,10 +143,26 @@ export default function App() {
     setError(null);
     
     try {
+      console.log('[Frontend App] Calling translateContent API service...');
       const translated = await translateContent(result, targetLanguage, model);
+      
+      console.log('[Frontend App] Received translated data from API:', translated);
+      
       setTranslatedResult(translated);
+      console.log('[Frontend App] Set translatedResult state.');
+      setTranslateAll(true);
+      
+      setExpandedSections({
+        title: true,
+        description: true,
+        bulletPoints: true,
+        keywords: true,
+        category: true,
+        itemSpecifics: true
+      });
+
     } catch (err) {
-      console.error('翻译出错:', err);
+      console.error('[Frontend App] Error during translation process:', err);
       setError(err.message || '翻译失败，请稍后再试');
     } finally {
       setIsTranslating(false);
@@ -335,12 +367,15 @@ export default function App() {
               <div className="bg-white p-6 rounded-lg shadow-md">
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-xl font-semibold">生成结果</h2>
-                  <div className="flex space-x-3">
+                  <div className="flex items-center space-x-3">
                     <div className="relative">
                       <select
                         value={targetLanguage}
-                        onChange={(e) => setTargetLanguage(e.target.value)}
-                        className="pl-8 pr-3 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 appearance-none"
+                        onChange={(e) => {
+                          setTargetLanguage(e.target.value);
+                          setTranslateAll(false);
+                        }}
+                        className="pl-8 pr-3 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 appearance-none text-sm"
                         disabled={isTranslating}
                       >
                         {languages.map(lang => (
@@ -356,14 +391,16 @@ export default function App() {
                     </div>
                     <button
                       onClick={handleTranslate}
-                      disabled={isTranslating}
-                      className={`px-4 py-1 bg-primary-600 text-white font-medium rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 flex items-center ${isTranslating ? 'opacity-70 cursor-not-allowed' : ''}`}
+                      disabled={isTranslating || !result}
+                      className={`px-3 py-1 bg-primary-600 text-white font-medium rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 flex items-center text-sm ${isTranslating || !result ? 'opacity-70 cursor-not-allowed' : ''}`}
                     >
+                      <Languages size={16} className="mr-1"/>
                       {isTranslating ? '翻译中...' : '翻译'}
                     </button>
                     <button
                       onClick={handleSaveRecord}
-                      className="px-4 py-1 bg-green-600 text-white font-medium rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 flex items-center"
+                      disabled={!result}
+                      className={`px-3 py-1 bg-green-600 text-white font-medium rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 flex items-center text-sm ${!result ? 'opacity-70 cursor-not-allowed' : ''}`}
                     >
                       <Save size={16} className="mr-1" /> 保存
                     </button>
@@ -374,7 +411,7 @@ export default function App() {
                   <ContentBox
                     title="商品标题"
                     content={result.title || ''}
-                    translatedContent={translatedResult?.title || ''}
+                    translatedContent={translateAll ? (translatedResult?.title || '') : null}
                     expanded={expandedSections.title}
                     toggleExpand={() => toggleSection('title')}
                   />
@@ -382,7 +419,7 @@ export default function App() {
                   <ContentBox
                     title="商品描述"
                     content={result.description || ''}
-                    translatedContent={translatedResult?.description || ''}
+                    translatedContent={translateAll ? (translatedResult?.description || '') : null}
                     expanded={expandedSections.description}
                     toggleExpand={() => toggleSection('description')}
                   />
@@ -390,7 +427,7 @@ export default function App() {
                   <BulletPoints
                     title="五点描述"
                     points={result.bulletPoints || []}
-                    translatedPoints={translatedResult?.bulletPoints || []}
+                    translatedPoints={translateAll ? (translatedResult?.bulletPoints || []) : null}
                     expanded={expandedSections.bulletPoints}
                     toggleExpand={() => toggleSection('bulletPoints')}
                     onChange={handleBulletPointsChange}
@@ -399,7 +436,7 @@ export default function App() {
                   <ContentBox
                     title="关键词"
                     content={(result.keywords || []).join(', ')}
-                    translatedContent={(translatedResult?.keywords || []).join(', ')}
+                    translatedContent={translateAll ? ((translatedResult?.keywords || []).join(', ')) : null}
                     expanded={expandedSections.keywords}
                     toggleExpand={() => toggleSection('keywords')}
                   />
@@ -407,7 +444,7 @@ export default function App() {
                   <ContentBox
                     title="商品分类"
                     content={(result.category || []).join(' > ')}
-                    translatedContent={(translatedResult?.category || []).join(' > ')}
+                    translatedContent={translateAll ? ((translatedResult?.category || []).join(' > ')) : null}
                     expanded={expandedSections.category}
                     toggleExpand={() => toggleSection('category')}
                   />
@@ -415,7 +452,7 @@ export default function App() {
                   <ItemSpecifics
                     title="物品属性"
                     specifics={result.itemSpecifics || {}}
-                    translatedSpecifics={translatedResult?.itemSpecifics || {}}
+                    translatedSpecifics={translateAll ? (translatedResult?.itemSpecifics || {}) : null}
                     expanded={expandedSections.itemSpecifics}
                     toggleExpand={() => toggleSection('itemSpecifics')}
                     onChange={handleItemSpecificsChange}
