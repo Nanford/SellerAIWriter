@@ -25,46 +25,76 @@ const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 /**
  * 使用OpenAI生成电商内容
- * @param {string} text - 商品描述
+ * @param {string} text - 商品描述 + 产品要素 (结合图片和用户输入)
  * @param {string|null} imageBase64 - 图片base64编码（可选）
  * @param {string} platform - 目标平台（amazon或ebay）
  * @returns {Object} 生成的内容对象
  */
 export async function generateContentOpenAI(text, imageBase64 = null, platform = 'amazon') {
-  console.log('OpenAI generation started with params:', { 
-    textLength: text?.length, 
-    hasImage: !!imageBase64,
-    platform
-  });
+  console.log('[OpenAI Generate] 开始生成内容，平台:', platform);
   let retryCount = 0;
   const maxRetries = 3;
   const baseDelay = 1000; // 1秒
 
   while (retryCount <= maxRetries) {
     try {
-      console.log("调用OpenAI API...");
+      console.log("[OpenAI Generate] 调用OpenAI API... 尝试次数:", retryCount + 1);
       
-      const platformName = platform === 'amazon' ? '亚马逊 (Amazon)' : 'eBay';
-      const platformSpecifics = platform === 'amazon' ? {
-        titleLength: "严格控制在 150 字符以内，优化以包含核心关键词",
-        descriptionFormat: "可以使用简单的 HTML 标签进行格式化 (如 <p>, <ul>, <li>, <b>)",
-        bulletPointsRequired: true,
-        keywordsPurpose: "生成一组后端搜索关键词 (Search Terms)，用于提高商品在亚马逊内部的搜索可见性，通常不直接展示给买家",
-        itemSpecificsImportance: "非常重要，请尽可能多地根据信息推断并填充"
-      } : {
-        titleLength: "严格控制在 80 字符以内，包含最重要关键词",
-        descriptionFormat: "通常为纯文本，保持段落清晰",
-        bulletPointsRequired: false, // eBay 无此专用字段，但可生成用于描述
-        keywordsPurpose: "生成一组适合嵌入标题和描述中的关键词，以提高搜索引擎可见性",
-        itemSpecificsImportance: "重要，尤其对于筛选功能，请根据信息推断"
-      };
+      let systemContent = '';
+      let responseFormat = { type: 'json_object' }; // Default format
 
-      const systemContent = `你是一位顶级的电商内容策略师和文案专家，尤其精通 ${platformName} 平台的规则和最佳实践。
+      if (platform === 'ebay') {
+        // --- eBay Specific Prompt (using JSON string to avoid issues) --- 
+        systemContent = 
+`你是一名精通 eBay 平台规则、SEO 优化与产品文案的中文内容专家。
+现在请根据用户提供的「产品要素」（结合图片和文本信息）为我生成 eBay 上架资料，只用简体中文。
+
+【输出结构】
+严格按照以下 JSON 结构输出，不要包含任何 markdown 代码块或其他解释性文本，直接输出纯粹的 JSON 对象:
+{
+  "title": "商品标题（Title）。要求：≤ 80 字符（含空格），必须包含品类关键词、1-2 个核心卖点、尺寸或层数等硬信息。",
+  "bulletPoints": [
+    "五点描述（Bullet Points）第一点。格式：'**加粗卖点词**: 简短说明'。要求：每条 20–40 字符。",
+    "五点描述第二点。格式同上。",
+    "五点描述第三点。格式同上。",
+    "五点描述第四点。格式同上。",
+    "五点描述第五点。格式同上。"
+  ],
+  "description": "商品描述（Product Description）。要求：用 HTML 段落输出，段落标题用 <h3>，正文用 <p>。首段总体卖点，其余段依次阐述材质/容量/功能/安装/保养等信息。",
+  "keywords": ["搜索关键词（Search Terms）。要求：5–10 个英文术语，用英文逗号分隔。确保关键词不在最终的中文标题中重复。"],
+  "category": "分类建议（Category Path）。要求：仅提供一条最相关的英文 eBay 类目完整路径。",
+  "itemSpecifics": "物品属性表（Item Specifics）。要求：生成一个 Markdown 格式的表格字符串，包含以下列：Brand, Type, Style, Material, Color, Dimensions, Weight, Features, Room, Assembly Required。根据产品要素填充，未知信息可留空或写'N/A'。示例：'| Brand | Type | Style | Material | Color | Dimensions | Weight | Features | Room | Assembly Required |\\n|---|---|---|---|---|---|---|---|---|---|\\n| Unbranded | Serving Cart | Industrial | Metal+Wood | Black+Gray | 80x40x90cm | ~10kg | Removable Tray, Wheels | Kitchen, Living Room | Yes |'",
+  "tips": [
+    "温馨提示第一条。要求：列表形式，说明拍摄道具不随货等注意事项。",
+    "温馨提示第二条（如果需要）。"
+  ]
+}
+
+【写作风格与合规】
+- 语气简洁、专业，避免夸大；动词使用主动式。
+- 数字/参数精确到整或 0.5 单位；未知请写 \"约\"。
+- 符合 eBay 合规：不出现电话、邮件、外链、不提保修天数、不过度引导站外交易。
+
+请根据用户提供的图片和文本信息，提取产品要素，并生成符合上述所有要求的 JSON 对象。
+`;
+      } else {
+        // --- Amazon Specific Prompt (Refined) --- 
+        const platformName = '亚马逊 (Amazon)';
+        const platformSpecifics = {
+          titleLength: "建议 80-150 字符，最多200字符，优化以包含核心关键词",
+          descriptionFormat: "可以使用简单的 HTML 标签进行格式化 (如 <p>, <ul>, <li>, <b>)",
+          bulletPointsRequired: true,
+          keywordsPurpose: "生成一组后端搜索关键词 (Search Terms)，用于提高商品在亚马逊内部的搜索可见性，通常不直接展示给买家",
+          itemSpecificsImportance: "非常重要，请尽可能多地根据信息推断并填充相关的属性键值对"
+        };
+
+        systemContent = 
+`你是一位顶级的电商内容策略师和文案专家，尤其精通 ${platformName} 平台的规则和最佳实践。
 你的任务是分析用户提供的商品文本描述和商品图片（如果提供），然后生成一份完全符合 ${platformName} 平台要求且具有营销吸引力的商品信息 JSON 对象。
 
 **核心要求：**
 1.  **深度结合图文信息：** 仔细分析图片中的商品外观、细节、材质、使用场景等视觉信息，并将其与用户提供的文本描述相结合。
-2.  **平台规则遵从：** 严格遵守 ${platformName} 的具体要求，特别是标题长度、描述格式等。
+2.  **平台规则遵从：** 严格遵守 ${platformName} 的具体要求，特别是标题长度、描述格式、五点描述的重要性。
 3.  **营销导向：** 生成的内容不仅要准确，还要能突出商品卖点，吸引潜在买家。
 4.  **JSON 输出：** 必须严格按照以下 JSON 结构返回结果，不要包含任何 markdown 代码块或其他解释性文本，直接输出纯粹的 JSON 对象。
 
@@ -72,30 +102,30 @@ export async function generateContentOpenAI(text, imageBase64 = null, platform =
 {
   "title": "产品标题。${platformSpecifics.titleLength}。",
   "description": "详细的产品描述。应包含产品特点、优势、规格、用途、适用场景等。${platformSpecifics.descriptionFormat}。",
-  ${platformSpecifics.bulletPointsRequired ?
-  `"bulletPoints": [
-    "卖点1: 简洁有力地概括一个核心优势",
-    "卖点2: 突出另一个独特功能或好处",
-    "卖点3: 说明材质、工艺或质量相关特点",
-    "卖点4: 强调易用性、兼容性或特殊设计",
-    "卖点5: 提及包装、配件或售后保障 (如果适用)"
-  ],` : `"bulletPoints": ["根据描述生成 3-5 个关键特性列表，用于丰富描述内容"],`}
-  "keywords": ["根据商品信息和目标平台生成一组关键词列表。${platformSpecifics.keywordsPurpose}。"],
-  "category": ["根据商品信息，建议 1-3 个最相关的 ${platformName} 分类路径。例如：'家居>厨房>餐具>碗'"],
+  "bulletPoints": [
+    "五点描述（Bullet Point 1）: 简洁有力地概括一个核心优势",
+    "五点描述（Bullet Point 2）: 突出另一个独特功能或好处",
+    "五点描述（Bullet Point 3）: 说明材质、工艺或质量相关特点",
+    "五点描述（Bullet Point 4）: 强调易用性、兼容性或特殊设计",
+    "五点描述（Bullet Point 5）: 提及包装、配件或售后保障 (如果适用)"
+  ],
+  "keywords": ["关键词列表。${platformSpecifics.keywordsPurpose}。"],
+  "category": ["分类建议。建议 1-3 个最相关的 ${platformName} 分类路径。例如：'家居>厨房>餐具>碗'"],
   "itemSpecifics": {
     "品牌": "根据信息推断或填写 '通用'",
     "材质": "根据图片和文本推断",
     "颜色": "根据图片和文本推断",
     "尺寸/规格": "根据图片和文本推断",
     "风格": "根据图片和文本推断",
-    // 尝试推断更多 ${platformName} 平台常用的相关属性...
-    "${platform === 'amazon' ? '型号' : 'MPN'}": "尝试推断",
-    "${platform === 'amazon' ? '商品重量' : '物品重量'}": "尝试推断"
-    // ... 更多基于平台的属性
+    "型号": "尝试推断",
+    "商品重量": "尝试推断",
+    "制造商零件编号": "尝试推断"
   }
 }
 
-请基于用户提供的信息进行创作。`;
+请基于用户提供的信息进行创作。
+`;
+      }
 
       const messages = [
         {
@@ -109,10 +139,11 @@ export async function generateContentOpenAI(text, imageBase64 = null, platform =
         content: []
       };
 
-      // 添加文本描述
+      // 添加文本描述 (包含产品要素)
       userMessage.content.push({
         type: 'text',
-        text: text
+        text: `产品要素（结合图片识别和用户输入）：
+${text}`
       });
 
       // 如果有图片，添加图片
@@ -120,7 +151,8 @@ export async function generateContentOpenAI(text, imageBase64 = null, platform =
         userMessage.content.push({
           type: 'image_url',
           image_url: {
-            url: `data:image/jpeg;base64,${imageBase64}`
+            url: `data:image/jpeg;base64,${imageBase64}`,
+            detail: "high" // Request high detail for image analysis
           }
         });
       }
@@ -128,66 +160,84 @@ export async function generateContentOpenAI(text, imageBase64 = null, platform =
       messages.push(userMessage);
 
       // 使用 gpt-4o 模型
+      console.log('[OpenAI Generate] Sending request to OpenAI API...');
+      const startTime = Date.now();
       const response = await openai.chat.completions.create({
         model: 'gpt-4o',
         messages,
-        temperature: 0.7,
-        response_format: { type: 'json_object' }
+        temperature: 0.6, // Slightly lower temperature for more factual adherence
+        response_format: responseFormat
       });
+      const endTime = Date.now();
+      console.log(`[OpenAI Generate] OpenAI API call finished in ${(endTime - startTime) / 1000} seconds.`);
 
-      console.log("API调用成功，返回结果");
-      const result = JSON.parse(response.choices[0].message.content);
-      console.log('OpenAI generation completed successfully');
+      const resultJsonString = response.choices[0].message.content;
+      console.log('[OpenAI Generate] Received raw response string:', resultJsonString);
+      const result = JSON.parse(resultJsonString);
+      console.log('[OpenAI Generate] OpenAI generation completed successfully, parsed result:', result);
       return result;
-    } catch (error) {
-      console.error("OpenAI API错误:", error);
       
-      // 增加重试逻辑，仅对连接和超时错误进行重试
+    } catch (error) {
+      console.error("[OpenAI Generate] Error during generation (Attempt", retryCount + 1, "):", error);
+      
+      // 重试逻辑...
       if (
         retryCount < maxRetries && (
           (error.cause && 
            (error.cause.code === 'ETIMEDOUT' || 
             error.cause.code === 'ECONNRESET' || 
             error.cause.code === 'ECONNREFUSED')) ||
+          (error instanceof OpenAI.APIError && (error.status === 429 || error.status >= 500)) ||
           error.message.includes('timeout') ||
           error.message.includes('network') ||
           error.message.includes('connection')
         )
       ) {
         retryCount++;
-        const retryDelay = baseDelay * Math.pow(2, retryCount); // 指数退避策略
-        console.log(`第${retryCount}次重试，等待${retryDelay}毫秒...`);
+        const retryDelay = baseDelay * Math.pow(2, retryCount); 
+        console.log(`[OpenAI Generate] 第${retryCount}次重试，等待${retryDelay}毫秒...`);
         await delay(retryDelay);
         continue;
       }
       
-      // 如果达到最大重试次数或不是网络相关错误，则返回基本结构
-      const fallbackResult = {
-        title: text && text.length > 10 ? text.substring(0, 80) : "未能生成标题",
-        description: "API调用失败，请稍后重试。原始描述: " + text,
-        bulletPoints: ["API连接失败，请稍后重试", "无法生成完整卖点", "请检查网络连接", "可能是暂时性服务中断", "或API密钥配置问题"],
-        keywords: ["商品", "电商"],
-        category: ["商品分类"],
-        itemSpecifics: {
-          "品牌": "通用",
-          "材质": "标准",
-          "尺寸": "标准尺寸"
-        }
+      // 如果达到最大重试次数或不是网络相关错误，则返回包含错误信息的基本结构
+      console.error('[OpenAI Generate] Generation failed after retries or due to non-retryable error.');
+      // 返回与平台匹配的错误结构
+      const errorPayload = {
+        title: "生成错误",
+        description: `API调用失败: ${error.message}`,
+        bulletPoints: ["无法生成内容"],
+        keywords: [],
       };
-      console.log('OpenAI generation failed after retries, returning fallback.');
-      return fallbackResult;
+      if (platform === 'ebay') {
+        errorPayload.category = '';
+        errorPayload.itemSpecifics = `| Error |\n|---|\n| ${error.message.replace(/\|/g, '\\|')} |`; // Escape pipe characters in error message
+        errorPayload.tips = [`错误: ${error.message}`];
+      } else {
+        errorPayload.category = [];
+        errorPayload.itemSpecifics = { Error: error.message };
+      }
+      return errorPayload;
     }
   }
-  // Add a final fallback return outside the loop in case something unexpected happens
-  console.log('OpenAI generation failed completely, returning final fallback.');
-  return {
-        title: text && text.length > 10 ? text.substring(0, 80) : "完全失败 - 无法生成标题",
-        description: "所有API调用和重试均失败。原始描述: " + text,
+  // 循环结束后仍失败（理论上仅在 maxRetries=0 时发生）
+  console.error('[OpenAI Generate] Generation failed completely outside retry loop.');
+  // 返回与平台匹配的错误结构
+  const finalErrorPayload = {
+        title: "生成完全失败",
+        description: "所有API调用和重试均失败。",
         bulletPoints: ["系统错误"],
         keywords: [],
-        category: [],
-        itemSpecifics: {}
-      };
+  };
+  if (platform === 'ebay') {
+        finalErrorPayload.category = '';
+        finalErrorPayload.itemSpecifics = `| Error |\n|---|\n| Complete Failure |`;
+        finalErrorPayload.tips = ['错误: 完全失败'];
+  } else {
+        finalErrorPayload.category = [];
+        finalErrorPayload.itemSpecifics = { Error: 'Complete Failure' };
+  }
+  return finalErrorPayload;
 }
 
 /**
