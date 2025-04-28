@@ -44,13 +44,13 @@ export async function generateContentGemini(desc, imgB64, platform = 'amazon') {
 {
   "title": "商品标题（≤ 80 字符，含关键词、卖点、硬信息）",
   "bulletPoints": [
-    "五点描述1（格式：'**加粗卖点词**: 说明'，20–40 字符）",
+    "五点描述1（格式：'**加粗卖点词**: 说明'，120–180 字符）",
     "五点描述2",
     "五点描述3",
     "五点描述4",
     "五点描述5"
   ],
-  "description": "商品描述（HTML格式：<h3>标题</h3><p>内容...</p>。段落：总结->材质->容量/功能->安装->保养）",
+  "description": "商品描述，段落：总结->材质->容量/功能->安装->保养）",
   "keywords": ["搜索关键词数组（5–10 个英文术语，字符串数组）"],
   "category": "分类建议（1条英文 eBay 类目路径字符串）",
   "itemSpecifics": { 
@@ -86,7 +86,7 @@ ${desc}
         const platformName = '亚马逊 (Amazon)';
         const platformSpecifics = {
           titleLength: "建议 80-150 字符，最多200字符",
-          descriptionFormat: "可用HTML标签 (<p>, <ul>, <li>, <b>)",
+          descriptionFormat: "基于图片识别的属性，做段落描述",
           keywordsPurpose: "后端 Search Terms，不直接展示"
         };
 

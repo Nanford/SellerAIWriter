@@ -54,13 +54,13 @@ export async function generateContentOpenAI(text, imageBase64 = null, platform =
 {
   "title": "商品标题（Title）。要求：≤ 80 字符，含品类关键词、1-2 核心卖点、硬信息（如尺寸/层数）。",
   "bulletPoints": [
-    "五点描述（Bullet Points）第一点。格式：'**加粗卖点词**: 简短说明'。要求：每条 20–40 字符。",
+    "五点描述（Bullet Points）第一点。格式：'**加粗卖点词**: 简短说明'。要求：每条 120–180 字符。",
     "五点描述第二点。格式同上。",
     "五点描述第三点。格式同上。",
     "五点描述第四点。格式同上。",
     "五点描述第五点。格式同上。"
   ],
-  "description": "商品描述（Product Description）。要求：用 HTML 段落输出 (<h3>标题</h3><p>内容...</p>)。结构：首段总结，后续段落依次阐述材质/容量/功能/安装/保养等。",
+  "description": "商品描述（Product Description）。结构：首段总结，后续段落依次阐述材质/容量/功能/安装/保养等。",
   "keywords": ["搜索关键词数组（Search Terms）。要求：返回一个包含 5–10 个相关英文术语的字符串数组。确保关键词不在最终的中文标题中重复。"],
   "category": "分类建议（Category Path）。要求：仅提供一条最相关的英文 eBay 类目完整路径（字符串）。",
   "itemSpecifics": { 
@@ -95,7 +95,7 @@ export async function generateContentOpenAI(text, imageBase64 = null, platform =
         const platformName = '亚马逊 (Amazon)';
         const platformSpecifics = {
           titleLength: "建议 80-150 字符，最多200字符，优化以包含核心关键词",
-          descriptionFormat: "可以使用简单的 HTML 标签进行格式化 (如 <p>, <ul>, <li>, <b>)",
+          descriptionFormat: "基于图片识别的关键信息，做商品段落描述",
           bulletPointsRequired: true,
           keywordsPurpose: "生成一组后端搜索关键词 (Search Terms)，用于提高商品在亚马逊内部的搜索可见性，通常不直接展示给买家",
           itemSpecificsImportance: "非常重要，请尽可能多地根据信息推断并填充相关的属性键值对"

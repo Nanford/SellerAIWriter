@@ -32,21 +32,23 @@ export const uploadImage = async (imageFile) => {
  * @param {string} text - 商品文本描述
  * @param {string} platform - 目标平台 (amazon | ebay)
  * @param {string|null} imagePath - 图片路径 (可选)
- * @param {string} model - 使用的AI模型 (openai | gemini)
+ * @param {string} modelProvider - 使用的AI模型提供商 (openai | gemini)
+ * @param {string} modelVersion - 使用的AI模型具体版本 (e.g., gpt-4o)
  * @returns {Promise<Object>} 生成的内容
  */
-export const generateContent = async (text, platform = 'amazon', imagePath = null, model = 'openai') => {
+export const generateContent = async (text, platform = 'amazon', imagePath = null, modelProvider = 'openai', modelVersion = 'gpt-4o') => {
   try {
     const payload = {
       text,
       platform,
       imagePath,
-      model
+      model: modelProvider, // Keep 'model' field name for backend compatibility for now
+      modelVersion       // Add modelVersion
     };
     
-    console.log("Sending payload to API:", payload);
+    console.log("Sending generate payload to API:", payload);
     const response = await api.post('/generate', payload);
-    console.log("API response:", response);
+    console.log("API response for generate:", response);
     return response.data;
   } catch (error) {
     console.error('Content generation failed - Error object:', error);
@@ -73,19 +75,23 @@ export const generateContent = async (text, platform = 'amazon', imagePath = nul
  * 翻译内容
  * @param {Object} content - 需要翻译的内容
  * @param {string} targetLanguage - 目标语言代码
- * @param {string} model - 使用的AI模型 (openai | gemini)
+ * @param {string} modelProvider - 使用的AI模型提供商 (openai | gemini)
+ * @param {string} modelVersion - 使用的AI模型具体版本 (e.g., gpt-4o)
  * @returns {Promise<Object>} 翻译后的内容
  */
-export const translateContent = async (content, targetLanguage, model) => {
-  console.log('Translating content with params:', { targetLanguage, model, contentType: typeof content });
+export const translateContent = async (content, targetLanguage, modelProvider = 'openai', modelVersion = 'gpt-4o') => {
+  console.log('Translating content with params:', { targetLanguage, modelProvider, modelVersion });
   try {
     const payload = {
       content,
       targetLanguage,
-      model // 确保 model 包含在 payload 中
+      model: modelProvider, // Keep 'model' field name
+      modelVersion       // Add modelVersion
     };
     
+    console.log("Sending translate payload to API:", payload);
     const response = await api.post('/translate', payload);
+    console.log("API response for translate:", response);
     return response.data;
   } catch (error) {
     console.error('翻译失败:', error);

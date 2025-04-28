@@ -28,25 +28,31 @@ router.post('/generate', async (req, res) => {
   console.log('📥 Received generate request:', req.body);
   
   try {
-    const { text, platform = 'amazon', imagePath, model = 'openai' } = req.body;
+    // Extract provider and specific version
+    const { text, platform = 'amazon', imagePath, model: modelProvider = 'openai', modelVersion = 'gpt-4o' } = req.body;
     
     console.log('🔍 Processing request parameters:');
     console.log('- Text:', text ? text.substring(0, 50) + '...' : 'None');
     console.log('- Platform:', platform);
     console.log('- Image Path:', imagePath || 'None');
-    console.log('- Model:', model);
+    console.log('- Model Provider:', modelProvider);
+    console.log('- Model Version:', modelVersion);
     
     // Check for image
     let imageBase64 = null;
     if (imagePath) {
       try {
         console.log('🖼️ Attempting to read image from:', imagePath);
-        const imageBuffer = safeReadFile(imagePath); // Assuming safeReadFile is defined elsewhere
+        // Assuming imagePath is relative to project root or an absolute path
+        // Adjust path logic if needed, e.g., using path.join(__dirname, '..', imagePath) if relative to backend/uploads
+        const absoluteImagePath = path.resolve(imagePath.startsWith('/') ? imagePath.substring(1) : imagePath); // Attempt to resolve path
+        console.log('🖼️ Resolved image path to:', absoluteImagePath);
+        const imageBuffer = safeReadFile(absoluteImagePath);
         if (imageBuffer) {
           imageBase64 = imageBuffer.toString('base64');
           console.log('✅ Image successfully loaded and converted to Base64');
         } else {
-          console.error('❌ Image file not found or empty at path:', imagePath);
+          console.error('❌ Image file not found or empty at path:', absoluteImagePath);
         }
       } catch (fileError) {
         console.error('❌ Error processing image:', fileError);
@@ -55,18 +61,19 @@ router.post('/generate', async (req, res) => {
       }
     }
     
-    console.log(`🤖 Will use ${model} model for content generation`);
+    console.log(`🤖 Will use ${modelProvider} service with model version ${modelVersion} for content generation`);
     
     let result;
     console.log('🚀 Calling API...');
     const startTime = Date.now();
     
-    if (model === 'gemini') {
+    // Pass modelVersion to the service function
+    if (modelProvider === 'gemini') {
       console.log('📡 Calling Gemini API...');
-      result = await generateContentGemini(text || "", imageBase64, platform);
+      result = await generateContentGemini(text || "", imageBase64, platform, modelVersion);
     } else {
       console.log('📡 Calling OpenAI API...');
-      result = await generateContentOpenAI(text || "", imageBase64, platform);
+      result = await generateContentOpenAI(text || "", imageBase64, platform, modelVersion);
     }
     
     const endTime = Date.now();
@@ -101,23 +108,25 @@ router.post('/generate', async (req, res) => {
 router.post('/translate', async (req, res) => {
   console.log('[Translate Route] 收到翻译请求:', req.body);
   try {
-    const { content, targetLanguage, model = 'openai' } = req.body;
+    // Extract provider and specific version
+    const { content, targetLanguage, model: modelProvider = 'openai', modelVersion = 'gpt-4o' } = req.body;
     
     if (!content || !targetLanguage) {
       console.error('[Translate Route] 错误: 缺少内容或目标语言');
       return res.status(400).json({ error: '缺少内容或目标语言' });
     }
     
-    console.log(`[Translate Route] 将使用 ${model} 模型进行翻译到 ${targetLanguage}`);
+    console.log(`[Translate Route] 将使用 ${modelProvider} 模型 (${modelVersion})进行翻译到 ${targetLanguage}`);
     
     let result;
-    console.log(`[Translate Route] Calling ${model} service...`); // <--- 添加日志：调用服务前
-    if (model === 'gemini') {
-      result = await translateContentGemini(content, targetLanguage);
+    console.log(`[Translate Route] Calling ${modelProvider} service...`);
+    // Pass modelVersion to the service function
+    if (modelProvider === 'gemini') {
+      result = await translateContentGemini(content, targetLanguage, modelVersion);
     } else {
-      result = await translateContentOpenAI(content, targetLanguage);
+      result = await translateContentOpenAI(content, targetLanguage, modelVersion);
     }
-    console.log(`[Translate Route] ${model} service call returned.`); // <--- 添加日志：调用服务后
+    console.log(`[Translate Route] ${modelProvider} service call returned.`);
     
     console.log('[Translate Route] 翻译API调用成功，返回结果给客户端');
     res.json(result);
