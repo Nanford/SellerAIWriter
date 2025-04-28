@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Upload, Trash2, Languages, Database, Save, Maximize2, Copy } from "lucide-react";
+import { Upload, Trash2, Languages, Database, Save, Maximize2, Copy, ChevronRight } from "lucide-react";
 import ContentBox from "./components/ContentBox.jsx";
 import BulletPoints from "./components/BulletPoints.jsx";
 import ItemSpecifics from "./components/ItemSpecifics.jsx";
@@ -194,288 +194,314 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 text-gray-800">
-      <div className="max-w-6xl mx-auto px-4">
-        <header className="text-center mb-10">
-          <h1 className="text-3xl font-bold text-primary-700">电商AI内容生成器</h1>
-          <p className="mt-2 text-gray-600">上传商品信息，一键生成精美listing</p>
-        </header>
+    <div className="min-h-screen bg-secondary-50 text-gray-800 flex flex-col">
+      <header className="bg-white shadow-sm py-4 border-b border-gray-200">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-bold text-primary-700">电商AI内容生成器</h1>
+            <div className="text-sm text-gray-500">让卖家出海更轻松</div>
+          </div>
+        </div>
+      </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* 左侧输入表单 */}
-          <div className="lg:col-span-1">
-            <div className="bg-white p-6 rounded-lg shadow-md">
-              <form onSubmit={handleSubmit}>
-                <div className="mb-4">
-                  <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
-                    商品名称
-                  </label>
-                  <input
-                    type="text"
-                    id="title"
-                    name="title"
-                    value={productInfo.title}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    required
-                  />
+      <main className="flex-grow py-8">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* 左侧输入表单 */}
+            <div className="lg:col-span-1">
+              <div className="card overflow-hidden">
+                <div className="card-header">
+                  <h2 className="font-semibold text-lg text-primary-800">信息输入</h2>
                 </div>
-                
-                <div className="mb-4">
-                  <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-                    商品描述
-                  </label>
-                  <textarea
-                    id="description"
-                    name="description"
-                    value={productInfo.description}
-                    onChange={handleInputChange}
-                    rows="5"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    required
-                  ></textarea>
-                </div>
-                
-                <div className="mb-4">
-                  <label htmlFor="extraInfo" className="block text-sm font-medium text-gray-700 mb-1">
-                    其他信息（可选）
-                  </label>
-                  <textarea
-                    id="extraInfo"
-                    name="extraInfo"
-                    value={productInfo.extraInfo}
-                    onChange={handleInputChange}
-                    rows="3"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  ></textarea>
-                </div>
-                
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    目标平台
-                  </label>
-                  <div className="flex space-x-4">
-                    <label className="inline-flex items-center">
-                      <input
-                        type="radio"
-                        name="platform"
-                        value="amazon"
-                        checked={platform === 'amazon'}
-                        onChange={() => setPlatform('amazon')}
-                        className="h-4 w-4 text-primary-600"
-                      />
-                      <span className="ml-2">亚马逊</span>
+                <form onSubmit={handleSubmit} className="card-body">
+                  <div className="form-group">
+                    <label htmlFor="title" className="form-label">
+                      商品名称
                     </label>
-                    <label className="inline-flex items-center">
-                      <input
-                        type="radio"
-                        name="platform"
-                        value="ebay"
-                        checked={platform === 'ebay'}
-                        onChange={() => setPlatform('ebay')}
-                        className="h-4 w-4 text-primary-600"
-                      />
-                      <span className="ml-2">eBay</span>
+                    <input
+                      type="text"
+                      id="title"
+                      name="title"
+                      value={productInfo.title}
+                      onChange={handleInputChange}
+                      className="input"
+                      required
+                      placeholder="输入商品名称"
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label htmlFor="description" className="form-label">
+                      商品描述
                     </label>
+                    <textarea
+                      id="description"
+                      name="description"
+                      value={productInfo.description}
+                      onChange={handleInputChange}
+                      rows="5"
+                      className="input"
+                      required
+                      placeholder="详细描述您的商品..."
+                    ></textarea>
+                  </div>
+                  
+                  <div className="form-group">
+                    <label htmlFor="extraInfo" className="form-label">
+                      其他信息（可选）
+                    </label>
+                    <textarea
+                      id="extraInfo"
+                      name="extraInfo"
+                      value={productInfo.extraInfo}
+                      onChange={handleInputChange}
+                      rows="3"
+                      className="input"
+                      placeholder="如目标客户群体、主要材质、核心功能等"
+                    ></textarea>
+                  </div>
+                  
+                  <div className="form-group">
+                    <label className="form-label">
+                      目标平台
+                    </label>
+                    <div className="flex space-x-4 mt-1">
+                      <label className="inline-flex items-center cursor-pointer">
+                        <input
+                          type="radio"
+                          name="platform"
+                          value="amazon"
+                          checked={platform === 'amazon'}
+                          onChange={() => setPlatform('amazon')}
+                          className="h-4 w-4 text-primary-600"
+                        />
+                        <span className="ml-2">亚马逊</span>
+                      </label>
+                      <label className="inline-flex items-center cursor-pointer">
+                        <input
+                          type="radio"
+                          name="platform"
+                          value="ebay"
+                          checked={platform === 'ebay'}
+                          onChange={() => setPlatform('ebay')}
+                          className="h-4 w-4 text-primary-600"
+                        />
+                        <span className="ml-2">eBay</span>
+                      </label>
+                    </div>
+                  </div>
+                  
+                  <div className="form-group">
+                    <label className="form-label">
+                      AI模型
+                    </label>
+                    <select
+                      value={model}
+                      onChange={(e) => setModel(e.target.value)}
+                      className="input"
+                    >
+                      {models.map(m => (
+                        <option key={m.id} value={m.id}>{m.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div className="form-group">
+                    <label className="form-label">
+                      商品图片 (可选)
+                    </label>
+                    <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md bg-gray-50 hover:bg-gray-100 transition-colors duration-200">
+                      {productInfo.imagePreview ? (
+                        <div className="text-center">
+                          <img
+                            src={productInfo.imagePreview}
+                            alt="预览"
+                            className="mx-auto h-48 object-contain mb-2"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setProductInfo(prev => ({ ...prev, image: null, imagePreview: null }))}
+                            className="text-sm text-red-600 hover:text-red-800 flex items-center justify-center"
+                          >
+                            <Trash2 size={16} className="mr-1" /> 移除
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="space-y-1 text-center">
+                          <Upload className="mx-auto h-12 w-12 text-primary-400" />
+                          <div className="flex text-sm text-gray-600">
+                            <label
+                              htmlFor="image-upload"
+                              className="relative cursor-pointer rounded-md font-medium text-primary-600 hover:text-primary-500"
+                            >
+                              <span>上传图片</span>
+                              <input
+                                id="image-upload"
+                                name="image"
+                                type="file"
+                                accept="image/*"
+                                onChange={handleImageChange}
+                                className="sr-only"
+                              />
+                            </label>
+                            <p className="pl-1">或拖放到此处</p>
+                          </div>
+                          <p className="text-xs text-gray-500">PNG, JPG, GIF 最大 10MB</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="mt-6">
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className={`btn btn-primary w-full ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                    >
+                      {isLoading ? '生成中...' : '生成内容'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+            
+            {/* 右侧结果区域 */}
+            <div className="lg:col-span-2">
+              {error && (
+                <div className="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-r-md animate-slide-up">
+                  <div className="flex">
+                    <div className="ml-3">
+                      <p className="text-sm text-red-700">{error}</p>
+                    </div>
                   </div>
                 </div>
-                
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    AI模型
-                  </label>
-                  <select
-                    value={model}
-                    onChange={(e) => setModel(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  >
-                    {models.map(m => (
-                      <option key={m.id} value={m.id}>{m.name}</option>
-                    ))}
-                  </select>
-                </div>
-                
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    商品图片 (可选)
-                  </label>
-                  <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
-                    {productInfo.imagePreview ? (
-                      <div className="text-center">
-                        <img
-                          src={productInfo.imagePreview}
-                          alt="预览"
-                          className="mx-auto h-48 object-contain mb-2"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setProductInfo(prev => ({ ...prev, image: null, imagePreview: null }))}
-                          className="text-sm text-red-600 hover:text-red-800 flex items-center justify-center"
+              )}
+              
+              {result && (
+                <div className="card animate-slide-up">
+                  <div className="card-header">
+                    <h2 className="text-xl font-semibold text-primary-800">生成结果</h2>
+                    <div className="flex items-center space-x-3">
+                      <div className="relative">
+                        <select
+                          value={targetLanguage}
+                          onChange={(e) => {
+                            setTargetLanguage(e.target.value);
+                            setTranslateAll(false);
+                          }}
+                          className="pl-8 pr-3 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 appearance-none text-sm"
+                          disabled={isTranslating}
                         >
-                          <Trash2 size={16} className="mr-1" /> 移除
-                        </button>
+                          {languages.map(lang => (
+                            <option key={lang.id} value={lang.id}>
+                              {lang.flag} {lang.name}
+                            </option>
+                          ))}
+                        </select>
+                        <Languages 
+                          size={16} 
+                          className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-500" 
+                        />
                       </div>
-                    ) : (
-                      <div className="space-y-1 text-center">
-                        <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                        <div className="flex text-sm text-gray-600">
-                          <label
-                            htmlFor="image-upload"
-                            className="relative cursor-pointer rounded-md font-medium text-primary-600 hover:text-primary-500"
-                          >
-                            <span>上传图片</span>
-                            <input
-                              id="image-upload"
-                              name="image"
-                              type="file"
-                              accept="image/*"
-                              onChange={handleImageChange}
-                              className="sr-only"
-                            />
-                          </label>
-                          <p className="pl-1">或拖放到此处</p>
-                        </div>
-                        <p className="text-xs text-gray-500">PNG, JPG, GIF 最大 10MB</p>
-                      </div>
+                      <button
+                        onClick={handleTranslate}
+                        disabled={isTranslating || !result}
+                        className={`btn btn-primary py-1 px-3 text-sm ${isTranslating || !result ? 'opacity-70 cursor-not-allowed' : ''}`}
+                      >
+                        <Languages size={16} className="mr-1"/>
+                        {isTranslating ? '翻译中...' : '翻译'}
+                      </button>
+                      <button
+                        onClick={handleSaveRecord}
+                        disabled={!result}
+                        className={`btn btn-green py-1 px-3 text-sm ${!result ? 'opacity-70 cursor-not-allowed' : ''}`}
+                      >
+                        <Save size={16} className="mr-1" /> 保存
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="card-body space-y-4">
+                    <ContentBox
+                      title="商品标题"
+                      content={result.title || ''}
+                      translatedContent={translateAll ? (translatedResult?.title || '') : null}
+                      expanded={expandedSections.title}
+                      toggleExpand={() => toggleSection('title')}
+                    />
+                    
+                    <ContentBox
+                      title="商品描述"
+                      content={result.description || ''}
+                      translatedContent={translateAll ? (translatedResult?.description || '') : null}
+                      expanded={expandedSections.description}
+                      toggleExpand={() => toggleSection('description')}
+                    />
+                    
+                    <BulletPoints
+                      title="五点描述"
+                      points={result.bulletPoints || []}
+                      translatedPoints={translateAll ? (translatedResult?.bulletPoints || []) : null}
+                      expanded={expandedSections.bulletPoints}
+                      toggleExpand={() => toggleSection('bulletPoints')}
+                      onChange={handleBulletPointsChange}
+                    />
+                    
+                    <ContentBox
+                      title="关键词"
+                      content={Array.isArray(result.keywords) ? (result.keywords || []).join(', ') : (result.keywords || '')}
+                      translatedContent={translateAll ? (Array.isArray(translatedResult?.keywords) ? (translatedResult.keywords || []).join(', ') : (translatedResult?.keywords || '')) : null}
+                      expanded={expandedSections.keywords}
+                      toggleExpand={() => toggleSection('keywords')}
+                    />
+                    
+                    <ContentBox
+                      title="商品分类"
+                      content={Array.isArray(result.category) ? (result.category || []).join(' > ') : (result.category || '')}
+                      translatedContent={translateAll ? (Array.isArray(translatedResult?.category) ? (translatedResult.category || []).join(' > ') : (translatedResult?.category || '')) : null}
+                      expanded={expandedSections.category}
+                      toggleExpand={() => toggleSection('category')}
+                    />
+                    
+                    <ItemSpecifics
+                      title="物品属性"
+                      specifics={result.itemSpecifics || {}}
+                      translatedSpecifics={translateAll ? (translatedResult?.itemSpecifics || {}) : null}
+                      expanded={expandedSections.itemSpecifics}
+                      toggleExpand={() => toggleSection('itemSpecifics')}
+                      onChange={handleItemSpecificsChange}
+                    />
+                    
+                    {platform === 'ebay' && result.tips && result.tips.length > 0 && (
+                      <ContentBox
+                        title="温馨提示"
+                        content={result.tips.join('\n')}
+                        translatedContent={translateAll ? ((translatedResult?.tips || []).join('\n')) : null}
+                        expanded={expandedSections.tips}
+                        toggleExpand={() => toggleSection('tips')}
+                      />
                     )}
                   </div>
                 </div>
-                
-                <div className="mt-6">
-                  <button
-                    type="submit"
-                    disabled={isLoading}
-                    className={`w-full px-4 py-2 bg-primary-600 text-white font-medium rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
-                  >
-                    {isLoading ? '生成中...' : '生成内容'}
-                  </button>
-                </div>
-              </form>
+              )}
             </div>
           </div>
-          
-          {/* 右侧结果区域 */}
-          <div className="lg:col-span-2">
-            {error && (
-              <div className="mb-6 bg-red-50 border-l-4 border-red-500 p-4">
-                <div className="flex">
-                  <div className="ml-3">
-                    <p className="text-sm text-red-700">{error}</p>
-                  </div>
-                </div>
-              </div>
-            )}
-            
-            {result && (
-              <div className="bg-white p-6 rounded-lg shadow-md">
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-xl font-semibold">生成结果</h2>
-                  <div className="flex items-center space-x-3">
-                    <div className="relative">
-                      <select
-                        value={targetLanguage}
-                        onChange={(e) => {
-                          setTargetLanguage(e.target.value);
-                          setTranslateAll(false);
-                        }}
-                        className="pl-8 pr-3 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 appearance-none text-sm"
-                        disabled={isTranslating}
-                      >
-                        {languages.map(lang => (
-                          <option key={lang.id} value={lang.id}>
-                            {lang.flag} {lang.name}
-                          </option>
-                        ))}
-                      </select>
-                      <Languages 
-                        size={16} 
-                        className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-500" 
-                      />
-                    </div>
-                    <button
-                      onClick={handleTranslate}
-                      disabled={isTranslating || !result}
-                      className={`px-3 py-1 bg-primary-600 text-white font-medium rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 flex items-center text-sm ${isTranslating || !result ? 'opacity-70 cursor-not-allowed' : ''}`}
-                    >
-                      <Languages size={16} className="mr-1"/>
-                      {isTranslating ? '翻译中...' : '翻译'}
-                    </button>
-                    <button
-                      onClick={handleSaveRecord}
-                      disabled={!result}
-                      className={`px-3 py-1 bg-green-600 text-white font-medium rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 flex items-center text-sm ${!result ? 'opacity-70 cursor-not-allowed' : ''}`}
-                    >
-                      <Save size={16} className="mr-1" /> 保存
-                    </button>
-                  </div>
-                </div>
-                
-                <div className="space-y-4">
-                  <ContentBox
-                    title="商品标题"
-                    content={result.title || ''}
-                    translatedContent={translateAll ? (translatedResult?.title || '') : null}
-                    expanded={expandedSections.title}
-                    toggleExpand={() => toggleSection('title')}
-                  />
-                  
-                  <ContentBox
-                    title="商品描述"
-                    content={result.description || ''}
-                    translatedContent={translateAll ? (translatedResult?.description || '') : null}
-                    expanded={expandedSections.description}
-                    toggleExpand={() => toggleSection('description')}
-                  />
-                  
-                  <BulletPoints
-                    title="五点描述"
-                    points={result.bulletPoints || []}
-                    translatedPoints={translateAll ? (translatedResult?.bulletPoints || []) : null}
-                    expanded={expandedSections.bulletPoints}
-                    toggleExpand={() => toggleSection('bulletPoints')}
-                    onChange={handleBulletPointsChange}
-                  />
-                  
-                  <ContentBox
-                    title="关键词"
-                    content={Array.isArray(result.keywords) ? (result.keywords || []).join(', ') : (result.keywords || '')}
-                    translatedContent={translateAll ? (Array.isArray(translatedResult?.keywords) ? (translatedResult.keywords || []).join(', ') : (translatedResult?.keywords || '')) : null}
-                    expanded={expandedSections.keywords}
-                    toggleExpand={() => toggleSection('keywords')}
-                  />
-                  
-                  <ContentBox
-                    title="商品分类"
-                    content={Array.isArray(result.category) ? (result.category || []).join(' > ') : (result.category || '')}
-                    translatedContent={translateAll ? (Array.isArray(translatedResult?.category) ? (translatedResult.category || []).join(' > ') : (translatedResult?.category || '')) : null}
-                    expanded={expandedSections.category}
-                    toggleExpand={() => toggleSection('category')}
-                  />
-                  
-                  <ItemSpecifics
-                    title="物品属性"
-                    specifics={result.itemSpecifics || {}}
-                    translatedSpecifics={translateAll ? (translatedResult?.itemSpecifics || {}) : null}
-                    expanded={expandedSections.itemSpecifics}
-                    toggleExpand={() => toggleSection('itemSpecifics')}
-                    onChange={handleItemSpecificsChange}
-                  />
-                  
-                  {platform === 'ebay' && result.tips && result.tips.length > 0 && (
-                    <ContentBox
-                      title="温馨提示"
-                      content={result.tips.join('\n')}
-                      translatedContent={translateAll ? ((translatedResult?.tips || []).join('\n')) : null}
-                      expanded={expandedSections.tips}
-                      toggleExpand={() => toggleSection('tips')}
-                    />
-                  )}
-                </div>
-              </div>
-            )}
+        </div>
+      </main>
+      
+      <footer className="bg-white border-t border-gray-200 py-6 mt-12">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="flex flex-col md:flex-row justify-between items-center">
+            <div className="mb-4 md:mb-0">
+              <div className="text-xl font-bold text-primary-700">电商AI内容助手</div>
+              <p className="text-sm text-gray-600 mt-1">让卖家出海更轻松</p>
+            </div>
+            <div className="text-sm text-gray-500">
+              © {new Date().getFullYear()} 版权所有
+            </div>
           </div>
         </div>
-      </div>
+      </footer>
     </div>
   );
 }
