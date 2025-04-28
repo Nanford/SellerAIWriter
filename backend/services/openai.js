@@ -54,14 +54,14 @@ export async function generateContentOpenAI(text, imageBase64 = null, platform =
 {
   "title": "商品标题（Title）。要求：≤ 80 字符，含品类关键词、1-2 核心卖点、硬信息（如尺寸/层数）。",
   "bulletPoints": [
-    "五点描述（Bullet Points）第一点。格式：'**加粗卖点词**: 简短说明'。要求：每条 120–180 字符。",
+    "五点描述（Bullet Points）第一点。格式：'卖点词: 专业说明,包括用途,优点,易用性,(儿童或礼物相关的产品则是精致，安全)。要求：每条 120–180 字符。",
     "五点描述第二点。格式同上。",
     "五点描述第三点。格式同上。",
     "五点描述第四点。格式同上。",
     "五点描述第五点。格式同上。"
   ],
   "description": "商品描述（Product Description）。结构：首段总结，后续段落依次阐述材质/容量/功能/安装/保养等。",
-  "keywords": ["搜索关键词数组（Search Terms）。要求：返回一个包含 5–10 个相关英文术语的字符串数组。确保关键词不在最终的中文标题中重复。"],
+  "keywords": ["搜索关键词数组（Search Terms）。要求：返回一个包含 5–10 个相关术语的字符串数组。确保关键词不在最终的中文标题中重复。"],
   "category": "分类建议（Category Path）。要求：仅提供一条最相关的英文 eBay 类目完整路径（字符串）。",
   "itemSpecifics": { 
     "要求": "物品属性对象（Item Specifics）。生成一个包含相关属性键值对的 JSON 对象。必须包含 Brand, Type, Style, Material, Color, Dimensions, Weight, Features, Room, Assembly Required 这些键（如果信息可用）。根据产品要素填充，未知信息可留空或写'N/A'。",
