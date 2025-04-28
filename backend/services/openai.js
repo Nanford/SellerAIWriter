@@ -54,7 +54,7 @@ export async function generateContentOpenAI(text, imageBase64 = null, platform =
 {
   "title": "商品标题（Title）。要求：≤ 80 字符，含品类关键词、1-2 核心卖点、硬信息（如尺寸/层数）。",
   "bulletPoints": [
-    "五点描述（Bullet Points）第一点。格式：'卖点词: 专业说明,包括用途,优点,易用性,(儿童或礼物相关的产品则是精致，安全)。要求：每条 120–180 字符。",
+    "五点描述（Bullet Points）第一点。格式：'卖点词: 专业说明,包括用途,优点,易用性,(儿童或礼物相关的产品则是精致，安全)。要求：每条 160–220 字符。",
     "五点描述第二点。格式同上。",
     "五点描述第三点。格式同上。",
     "五点描述第四点。格式同上。",
@@ -116,11 +116,11 @@ export async function generateContentOpenAI(text, imageBase64 = null, platform =
   "title": "产品标题。${platformSpecifics.titleLength}。",
   "description": "详细的产品描述。应包含产品特点、优势、规格、用途、适用场景等。${platformSpecifics.descriptionFormat}。",
   "bulletPoints": [
-    "五点描述（Bullet Point 1）: 简洁有力地概括一个核心优势",
-    "五点描述（Bullet Point 2）: 突出另一个独特功能或好处",
-    "五点描述（Bullet Point 3）: 说明材质、工艺或质量相关特点",
-    "五点描述（Bullet Point 4）: 强调易用性、兼容性或特殊设计",
-    "五点描述（Bullet Point 5）: 提及包装、配件或售后保障 (如果适用)"
+    "五点描述（Bullet Point 1）: 简洁有力地概括一个核心优势,160–220 字符",
+    "五点描述（Bullet Point 2）: 突出另一个独特功能或好处,160–220 字符",
+    "五点描述（Bullet Point 3）: 说明材质、工艺或质量相关特点,160–220 字符",
+    "五点描述（Bullet Point 4）: 强调易用性、兼容性或特殊设计,160–220 字符",
+    "五点描述（Bullet Point 5）: 提及包装、配件或售后保障 (如果适用),160–220 字符"
   ],
   "keywords": ["关键词数组。${platformSpecifics.keywordsPurpose}。"],
   "category": ["分类建议数组。建议 1-3 个最相关的 ${platformName} 分类路径。例如：'家居>厨房>餐具>碗'"],
