@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Copy, CheckCircle } from "lucide-react";
 
-const CopyButton = ({ text }) => {
+const CopyButton = ({ text, title = "复制内容" }) => {
   const [copied, setCopied] = useState(false);
   
   const handleCopy = async () => {
@@ -27,7 +27,7 @@ const CopyButton = ({ text }) => {
           : 'text-gray-500 hover:text-primary-600 hover:bg-gray-100'
         }`
       }
-      title="复制内容"
+      title={copied ? "已复制!" : title}
     >
       {copied ? <CheckCircle size={16} /> : <Copy size={16} />}
     </button>

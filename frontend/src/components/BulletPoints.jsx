@@ -132,8 +132,11 @@ const BulletPoints = ({
         
         {expanded && translatedPoints && (
           <div className="animate-slide-up">
-            <div className="text-sm text-gray-600 mb-1 flex items-center">
+            <div className="text-sm text-gray-600 mb-1 flex items-center justify-between">
               <span className="tag tag-green mr-2">翻译</span>
+              {translatedPoints && translatedPoints.length > 0 && (
+                <CopyButton text={translatedPoints.join("\n")} title="复制所有翻译卖点" />
+              )}
             </div>
             <ul className="space-y-2">
               {(translatedPoints || []).map((point, index) => (
@@ -142,7 +145,7 @@ const BulletPoints = ({
                     {point}
                   </div>
                   <div className="ml-2 flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <CopyButton text={point} />
+                    <CopyButton text={point} title={`复制第${index+1}点翻译`} />
                   </div>
                 </li>
               ))}

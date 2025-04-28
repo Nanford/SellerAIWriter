@@ -211,8 +211,14 @@ const ItemSpecifics = ({
         
         {expanded && translatedSpecifics && (
           <div className="animate-slide-up">
-            <div className="text-sm text-gray-600 mb-1 flex items-center">
+            <div className="text-sm text-gray-600 mb-1 flex items-center justify-between">
               <span className="tag tag-green mr-2">翻译</span>
+              {translatedSpecifics && Object.keys(translatedSpecifics).length > 0 && (
+                <CopyButton 
+                  text={formatSpecifics(translatedSpecifics)} 
+                  title="复制所有翻译属性" 
+                />
+              )}
             </div>
             <div className="space-y-2">
               {Object.entries(translatedSpecifics || {}).map(([key, value]) => (
@@ -226,7 +232,7 @@ const ItemSpecifics = ({
                     </div>
                   </div>
                   <div className="ml-2 flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <CopyButton text={`${key}: ${value}`} />
+                    <CopyButton text={`${key}: ${value}`} title={`复制"${key}"属性翻译`} />
                   </div>
                 </div>
               ))}
